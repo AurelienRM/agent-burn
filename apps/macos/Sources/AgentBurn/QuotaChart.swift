@@ -62,7 +62,11 @@ struct QuotaChart: View {
       if showsIdeal && range == .rte && domain.contains(forecast.reset) { resetRule }
       cursorMarks
     }
-    .chartXScale(domain: scale.lowerBound...scale.upperBound)
+    // End padding keeps the centered last axis label inside the chart.
+    .chartXScale(
+      domain: scale.lowerBound...scale.upperBound,
+      range: .plotDimension(endPadding: compact ? 12 : 26)
+    )
     .chartYScale(domain: 0...100)
     .chartXSelection(value: $selected)
     .chartYAxis {
@@ -84,8 +88,7 @@ struct QuotaChart: View {
       }
       AxisMarks(values: axisDates) { value in
         AxisTick(length: 4, stroke: StrokeStyle(lineWidth: 1)).foregroundStyle(BurnTheme.grid)
-        // The last midday label hugs its tick so the trailing edge never truncates it.
-        AxisValueLabel(anchor: value.index == value.count - 1 ? .topTrailing : nil) {
+        AxisValueLabel {
           if let date = value.as(Date.self) {
             Text(quotaChartAxisLabel(date, range: range, marks: axisDates, compact: compact))
               .foregroundStyle(muted)
@@ -132,9 +135,10 @@ struct QuotaChart: View {
 
   @ChartContentBuilder private var recordedArea: some ChartContent {
     ForEach(Array(drawnSamples.enumerated()), id: \.offset) { _, sample in
+      // Step points share a date; the default stacking would sum them past 100%.
       AreaMark(
         x: .value("Date", sample.date), y: .value("Remaining", sample.remaining),
-        series: .value("Series", "Recorded area")
+        series: .value("Series", "Recorded area"), stacking: .unstacked
       )
       .foregroundStyle(color.opacity(0.12))
       .interpolationMethod(.linear)
@@ -284,6 +288,7 @@ struct QuotaChart: View {
         + quotaChartCursorLabel(cursor, range: range)
     )
     .font(.system(size: 12)).foregroundStyle(muted).monospacedDigit()
+    .lineLimit(1).minimumScaleFactor(0.8)
   }
 
   private var cursorStroke: Color {
@@ -328,5 +333,7 @@ struct QuotaChart: View {
       Text(quotaChartPercentLabel(value)).foregroundStyle(BurnTheme.ink).monospacedDigit()
     }
     .font(.system(size: 12))
+    .lineLimit(1)
+    .fixedSize()
   }
 }

@@ -338,6 +338,13 @@ private func utcDate(year: Int = 2027, month: Int = 1, day: Int, hour: Int = 0) 
       == marks[0].formatted(.dateTime.month(.abbreviated)))
 }
 
+@Test func quotaChartMonthRangeSpacesAxisDates() {
+  let marks = quotaChartAxisDates(range: .month, forecast: forecast, now: now, calendar: utc)
+  #expect(marks.count >= 6)
+  #expect(marks.count <= 9)
+  #expect(zip(marks, marks.dropFirst()).allSatisfy { $1.timeIntervalSince($0) >= 0.6 * 86_400 })
+}
+
 @Test func quotaChartWeekWindowKeepsDailyAxisDates() {
   let marks = quotaChartAxisDates(range: .rte, forecast: forecast, now: now)
   #expect(marks.count >= 6)

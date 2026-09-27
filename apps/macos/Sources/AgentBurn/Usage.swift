@@ -498,7 +498,15 @@ func quotaChartAxisDates(
     return min(max(midday, scale.lowerBound), scale.upperBound)
   }
   let days = window.upperBound.timeIntervalSince(window.lowerBound) / 86_400
-  return days > 45 ? quotaChartThinnedDates(marks) : marks
+  if days > 45 { return quotaChartThinnedDates(marks) }
+  let stride = days > 12 ? Int((Double(marks.count) / 8).rounded(.up)) : 1
+  var spaced: [Date] = []
+  for (offset, mark) in marks.enumerated() where offset % stride == 0 {
+    // Edge marks are clamped to the scale and can land right next to their neighbour.
+    if let previous = spaced.last, mark.timeIntervalSince(previous) < 0.95 * 86_400 { continue }
+    spaced.append(mark)
+  }
+  return spaced
 }
 
 func quotaChartDayBands(
@@ -632,10 +640,13 @@ func quotaChartAxisLabel(
   {
     return date.formatted(.dateTime.month(.abbreviated))
   }
-  let short = compact || marks.count > 10
+  let spansWeeks = (marks.last?.timeIntervalSince(marks.first ?? date) ?? 0) > 10 * 86_400
+  let short = compact || marks.count > 10 || spansWeeks
   let isMonthStart = calendar.component(.day, from: date) == 1
+  let previous = marks.firstIndex(of: date).flatMap { $0 > 0 ? marks[$0 - 1] : nil }
+  let monthChanged = previous.map { !calendar.isDate($0, equalTo: date, toGranularity: .month) }
   if short {
-    if date == marks.first || isMonthStart {
+    if date == marks.first || isMonthStart || monthChanged == true {
       return date.formatted(.dateTime.month(.abbreviated).day())
     }
     return date.formatted(.dateTime.day())
