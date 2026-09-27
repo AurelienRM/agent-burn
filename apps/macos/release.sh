@@ -14,7 +14,13 @@ fi
 if ! git diff --quiet HEAD -- apps/macos rust; then echo "Commit app and CLI changes first." >&2; exit 1; fi
 existing_draft="$(gh release view "$tag" --repo "$repo" --json isDraft --jq .isDraft 2>/dev/null || true)"
 if [[ "$existing_draft" == false ]]; then echo "$tag is already published" >&2; exit 1; fi
-key="${AGENT_BURN_SPARKLE_KEY_FILE:?Set AGENT_BURN_SPARKLE_KEY_FILE to your private Ed25519 seed file}"
+# Sign the appcast with a seed file when provided, otherwise with the Keychain key
+# created by `generate_keys --account dev.melvynx.agent-burn`.
+if [[ -n "${AGENT_BURN_SPARKLE_KEY_FILE:-}" ]]; then
+  sparkle_signing=(--ed-key-file "$AGENT_BURN_SPARKLE_KEY_FILE")
+else
+  sparkle_signing=(--account "${AGENT_BURN_SPARKLE_ACCOUNT:-dev.melvynx.agent-burn}")
+fi
 : "${AGENT_BURN_SIGN_IDENTITY:?Set a Developer ID Application identity}"
 work="$(mktemp -d "${TMPDIR:-/tmp}/agent-burn-release.XXXXXX")"
 trap 'rm -rf "$work"' EXIT
@@ -36,7 +42,7 @@ ditto -c -k --sequesterRsrc --keepParent 'dist/Agent Burn.app' "$archive"
 generator="$(find .build/artifacts -type f -name generate_appcast -print -quit)"
 mkdir dist/feed
 cp "$archive" dist/feed/
-"$generator" --ed-key-file "$key" --download-url-prefix "https://github.com/$repo/releases/download/$tag/" --link 'https://agent-burn.melvynx.dev' dist/feed
+"$generator" "${sparkle_signing[@]}" --download-url-prefix "https://github.com/$repo/releases/download/$tag/" --link 'https://agent-burn.melvynx.dev' dist/feed
 cp dist/feed/appcast.xml dist/appcast.xml
 (cd dist && shasum -a 256 Agent-Burn-macOS.zip > SHA256SUMS)
 notes="Universal macOS 14+ app. Developer ID signed and notarized. Includes the native CLI and signed Sparkle updates. Source is attached to this release tag."

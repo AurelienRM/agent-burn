@@ -96,7 +96,9 @@ and GitHub release assets. System profile submission is disabled.
 2. Test, commit and push the exact source to a branch on your release repository.
 3. Install both Rust targets with `rustup target add aarch64-apple-darwin x86_64-apple-darwin`.
 4. Set `AGENT_BURN_SIGN_IDENTITY` to your Developer ID Application certificate.
-5. Set `AGENT_BURN_SPARKLE_KEY_FILE` to a private base64 Ed25519 seed file.
+5. Set `AGENT_BURN_SPARKLE_KEY_FILE` to a private base64 Ed25519 seed file, or
+   keep the key in the Keychain under the `dev.melvynx.agent-burn` account
+   (override with `AGENT_BURN_SPARKLE_ACCOUNT`).
 6. Set `AGENT_BURN_NOTARY_PROFILE` to a `notarytool` credential profile, or
    authenticate the open-source `asc` CLI for notarization.
 7. Run `./release.sh` on the signing Mac.
