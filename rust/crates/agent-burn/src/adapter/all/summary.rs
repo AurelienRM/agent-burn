@@ -224,6 +224,9 @@ fn run_harness_weekly(
         agents: vec![agent.to_string()],
         ..shared.clone()
     };
+    let offline = shared.offline;
+    let limit_usage =
+        (agent == "codex").then(|| std::thread::spawn(move || codex::daily_limit_usage(offline)));
     let result = loader::load_rows(AgentReportKind::Daily, &selected)?;
     let rows = &result.rows;
 
@@ -282,6 +285,9 @@ fn run_harness_weekly(
         daily,
         live_limits,
         reset_credits_available,
+        limit_usage: limit_usage
+            .and_then(|handle| handle.join().ok())
+            .unwrap_or_default(),
         monthly_equiv: agent_cost_last_days(rows, 30, agent),
         models: agent_models_last_days(rows, 30, agent),
         spend_mix: agent_spend_mix_last_days(rows, 30, agent, &spend_pricing),

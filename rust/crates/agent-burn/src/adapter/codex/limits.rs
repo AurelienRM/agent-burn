@@ -49,7 +49,7 @@ pub(crate) fn usage_limits(offline: bool) -> Option<CodexPlanSnapshot> {
     fetch_usage_limits(&token)
 }
 
-fn access_token() -> Option<String> {
+pub(super) fn access_token() -> Option<String> {
     for home in codex_home_paths().ok()? {
         let path = home.join("auth.json");
         if let Some(token) = fs::read_to_string(path)
@@ -74,12 +74,16 @@ fn access_token_from_auth(json: &str) -> Option<String> {
 }
 
 fn fetch_usage_limits(token: &str) -> Option<CodexPlanSnapshot> {
+    parse_usage_limits(&fetch_body(USAGE_URL, token)?)
+}
+
+pub(super) fn fetch_body(url: &str, token: &str) -> Option<String> {
     let agent = ureq::Agent::config_builder()
         .timeout_global(Some(Duration::from_secs(FETCH_TIMEOUT_SECONDS)))
         .build()
         .new_agent();
     let mut response = agent
-        .get(USAGE_URL)
+        .get(url)
         .header("Authorization", &format!("Bearer {token}"))
         .header("Accept", "application/json")
         .header(
@@ -91,13 +95,12 @@ fn fetch_usage_limits(token: &str) -> Option<CodexPlanSnapshot> {
     if response.status().as_u16() != 200 {
         return None;
     }
-    let body = response
+    response
         .body_mut()
         .with_config()
         .limit(FETCH_MAX_BYTES)
         .read_to_string()
-        .ok()?;
-    parse_usage_limits(&body)
+        .ok()
 }
 
 pub(super) fn parse_usage_limits(body: &str) -> Option<CodexPlanSnapshot> {

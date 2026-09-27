@@ -47,6 +47,7 @@ struct HarnessReport: Codable, Sendable {
   let weeklyTrend: [WeeklyUsage]?
   let imageGenerations: ImageUsage?
   var resetCreditsAvailable: Int? = nil
+  var limitUsageDaily: [LimitUsageDay]? = nil
 }
 
 struct SubscriptionReport: Codable, Sendable {
@@ -444,7 +445,9 @@ func quotaChartScale(
   let window = quotaChartWindow(range: range, forecast: forecast, now: now, calendar: calendar)
   let grid = quotaChartGridDates(range: range, forecast: forecast, now: now, calendar: calendar)
   let start = min(grid.first ?? window.lowerBound, window.lowerBound)
-  guard range != .today, let last = grid.last else { return start...window.upperBound }
+  guard quotaChartStepComponent(range: range, window: window) != .hour, let last = grid.last else {
+    return start...window.upperBound
+  }
   // Leave room after the last midday label so it is never clipped at the trailing edge.
   return start...max(window.upperBound, last.addingTimeInterval(21 * 3600))
 }
@@ -452,8 +455,8 @@ func quotaChartScale(
 func quotaChartStepComponent(range: QuotaChartRange, window: ClosedRange<Date>)
   -> Calendar.Component
 {
-  if range == .today { return .hour }
   let days = window.upperBound.timeIntervalSince(window.lowerBound) / 86_400
+  if range == .today || days <= 1 { return .hour }
   return days > 45 ? .month : .day
 }
 
@@ -483,9 +486,10 @@ func quotaChartAxisDates(
 ) -> [Date] {
   let window = quotaChartWindow(range: range, forecast: forecast, now: now, calendar: calendar)
   let grid = quotaChartGridDates(range: range, forecast: forecast, now: now, calendar: calendar)
-  if range == .today {
+  if quotaChartStepComponent(range: range, window: window) == .hour {
+    let stride = grid.count > 8 ? 3 : 1
     return grid.enumerated().compactMap { offset, date in
-      offset % 3 == 0 || offset == grid.count - 1 ? date : nil
+      offset % stride == 0 || offset == grid.count - 1 ? date : nil
     }
   }
   let scale = quotaChartScale(range: range, forecast: forecast, now: now, calendar: calendar)
@@ -500,7 +504,8 @@ func quotaChartAxisDates(
 func quotaChartDayBands(
   range: QuotaChartRange, forecast: Forecast, now: Date, calendar: Calendar = .current
 ) -> [QuotaChartBand] {
-  guard range != .today else { return [] }
+  let window = quotaChartWindow(range: range, forecast: forecast, now: now, calendar: calendar)
+  guard quotaChartStepComponent(range: range, window: window) != .hour else { return [] }
   let grid = quotaChartGridDates(range: range, forecast: forecast, now: now, calendar: calendar)
   let scale = quotaChartScale(range: range, forecast: forecast, now: now, calendar: calendar)
   return grid.enumerated().map { index, start in
@@ -619,6 +624,9 @@ func quotaChartAxisLabel(
   calendar: Calendar = .current
 ) -> String {
   if range == .today { return date.formatted(.dateTime.hour()) }
+  if let first = marks.first, let last = marks.last, last.timeIntervalSince(first) < 86_400 {
+    return date.formatted(.dateTime.hour())
+  }
   if let first = marks.first, let last = marks.last,
     last.timeIntervalSince(first) > 45 * 86_400
   {
@@ -865,6 +873,20 @@ func cursorMeterForecast(account: CursorAccount?, now: Date, stored: Forecast?) 
   if let stored { return stored }
   guard let account, let reading = cursorQuotaReading(account, now: now) else { return nil }
   return Forecast(window: reading.window, observedAt: reading.date, isLive: true)
+}
+
+func claudeSessionReading(_ account: ClaudeAccount, now: Date = .now) -> QuotaReading? {
+  guard let used = account.sessionUsedPercent, used.isFinite, (0...100).contains(used),
+    let resetMs = account.sessionResetsAtMs
+  else { return nil }
+  let duration: TimeInterval = 5 * 3600
+  let reset = Date(timeIntervalSince1970: resetMs / 1000)
+  let elapsed = (duration - reset.timeIntervalSince(now)) / duration * 100
+  guard reset > now, (0...100).contains(elapsed) else { return nil }
+  return QuotaReading(
+    agent: claudeSessionQuotaAgent, observedAt: now.timeIntervalSince1970 * 1000,
+    window: QuotaWindow(
+      windowMinutes: 300, usedPercent: used, elapsedPercent: elapsed, apiEquivalentSpent: 0))
 }
 
 func cursorQuotaReading(_ account: CursorAccount, now: Date = .now) -> QuotaReading? {

@@ -22,7 +22,7 @@ agent-burn harness claude --json --jq '.window'
 agent-burn harness codex --json --jq '.spendMix'
 ```
 
-Harness JSON includes `spendMix`, a trailing-30-day breakdown of input, output, cache write, and cached input token classes with token percentages and API-equivalent cost percentages. Codex harness JSON also includes `resetCreditsAvailable` when the live ChatGPT usage meter reports banked rate-limit resets.
+Harness JSON includes `spendMix`, a trailing-30-day breakdown of input, output, cache write, and cached input token classes with token percentages and API-equivalent cost percentages. Codex harness JSON also includes `resetCreditsAvailable` when the live ChatGPT usage meter reports banked rate-limit resets, and `limitUsageDaily`: the ChatGPT Codex dashboard's last 30 days of weekly-limit consumption (`date`, `usedPercent`, plus `surfaces[]` with `surface`/`usedPercent` and `models[]` with `model`/`speed`/`usedPercent`). It is empty with `--offline` or without a signed-in Codex token.
 
 The JSON shape is intended for dashboards and scripts. Prefer command names `summary` and `harness`.
 

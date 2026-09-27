@@ -13,6 +13,7 @@ struct QuotaChart: View {
   var range = QuotaChartRange.rte
   var now = Date.now
   var resetLabel = "Reset"
+  var height: CGFloat? = nil
   @State private var selected: Date?
   private var muted: Color { compact ? BurnTheme.quotaMuted : BurnTheme.muted }
   private var domain: ClosedRange<Date> {
@@ -93,7 +94,7 @@ struct QuotaChart: View {
         }
       }
     }
-    .frame(height: compact ? 176 : 250)
+    .frame(height: height ?? (compact ? 176 : 250))
   }
 
   @ChartContentBuilder private var dayBands: some ChartContent {

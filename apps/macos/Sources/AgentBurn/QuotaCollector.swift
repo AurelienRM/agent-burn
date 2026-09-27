@@ -25,6 +25,16 @@ private struct CollectedQuota: Codable, Sendable {
   let window: QuotaWindow?
 }
 
+private struct CollectedHarnessQuota: Codable, Sendable {
+  let agent: String
+  let observedAt: Double
+  let window: QuotaWindow
+  var sessionWindow: QuotaWindow? = nil
+}
+
+/// Claude's 5-hour session meter is stored as its own series beside the weekly one.
+let claudeSessionQuotaAgent = "claude-session"
+
 enum QuotaCollector {
   /// launchd owns scheduling; this process performs one bounded collection and exits.
   static func collect(directory: URL = QuotaCollectorConfig.directory) async throws {
@@ -41,22 +51,31 @@ enum QuotaCollector {
     defer { flock(descriptor, LOCK_UN) }
     let file = QuotaHistoryFile(directory: directory)
     var history = try file.load() ?? QuotaHistory()
-    await withTaskGroup(of: (String, QuotaReading?, String?).self) { group in
+    await withTaskGroup(of: (String, [QuotaReading], String?).self) { group in
       for agent in ["codex", "claude"] {
         group.addTask {
           do {
             let executable = try CLIClient.executable(customPath: config.customPath)
-            let reading = try await CLIClient.read(
-              QuotaReading.self,
+            let collected = try await CLIClient.read(
+              CollectedHarnessQuota.self,
               executable: executable, arguments: ["harness", agent], offline: false,
               environment: ["CODEX_HOME": config.codexHomes, "AGENT_BURN_QUOTA_ONLY": "1"],
               timeout: 45)
-            guard reading.agent == agent, reading.observedAt.isFinite, reading.window.isValid,
+            let reading = QuotaReading(
+              agent: agent, observedAt: collected.observedAt, window: collected.window)
+            guard collected.agent == agent, reading.observedAt.isFinite, reading.window.isValid,
               abs(reading.date.timeIntervalSinceNow) <= 90
             else { throw CLIError.invalidOutput }
-            return (agent, reading, nil)
+            var readings = [reading]
+            if agent == "claude", let session = collected.sessionWindow, session.isValid {
+              readings.append(
+                QuotaReading(
+                  agent: claudeSessionQuotaAgent, observedAt: collected.observedAt,
+                  window: session))
+            }
+            return (agent, readings, nil)
           } catch {
-            return (agent, nil, "Live quota could not be collected. The last reading is preserved.")
+            return (agent, [], "Live quota could not be collected. The last reading is preserved.")
           }
         }
       }
@@ -73,26 +92,25 @@ enum QuotaCollector {
               <= 90
           else { throw CLIError.invalidOutput }
           guard let window = collected.window, window.isValid else {
-            return ("cursor", nil, nil)
+            return ("cursor", [], nil)
           }
           return (
             "cursor",
-            QuotaReading(
-              agent: "cursor", observedAt: collected.observedAt, window: window),
+            [QuotaReading(agent: "cursor", observedAt: collected.observedAt, window: window)],
             nil
           )
         } catch {
           return (
-            "cursor", nil,
+            "cursor", [],
             "Live Cursor credits could not be collected. The last reading is preserved."
           )
         }
       }
-      for await (agent, reading, error) in group {
-        if let reading { history.record(reading, source: config.source) }
+      for await (agent, readings, error) in group {
+        for reading in readings { history.record(reading, source: config.source) }
         if let error {
           history.fail(agent: agent, source: config.source, message: error)
-        } else if reading == nil {
+        } else if readings.isEmpty {
           history.failures[config.source]?[agent] = nil
         }
         // Persist each provider immediately, even if the other hangs or this process crashes.

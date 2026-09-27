@@ -1,7 +1,7 @@
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 use super::summary::format_compact_tokens;
-use crate::{cli::SharedArgs, format_currency, json_float, Color};
+use crate::{Color, adapter::codex::LimitUsageDay, cli::SharedArgs, format_currency, json_float};
 
 /// Average days per month, for normalising a window's value to a monthly figure.
 const DAYS_PER_MONTH: f64 = 30.4375;
@@ -356,6 +356,8 @@ pub(super) struct WeeklyView<'a> {
     pub(super) daily: Vec<(String, f64)>,
     pub(super) live_limits: bool,
     pub(super) reset_credits_available: Option<u32>,
+    /// Codex dashboard: daily share of the weekly limit, by surface and model.
+    pub(super) limit_usage: Vec<LimitUsageDay>,
     /// Trailing-30-day API-equivalent spend for this agent.
     pub(super) monthly_equiv: f64,
     /// This agent's top models (last 30d): `(model, cost, tokens)`, by cost desc.
@@ -395,6 +397,7 @@ pub(super) fn print_weekly(view: &WeeklyView, shared: &SharedArgs) {
     print_spend_mix(&mut out, view, color, shared);
     print_this_week(&mut out, view, color, shared);
     print_daily(&mut out, view, color, shared);
+    print_limit_usage(&mut out, view, color, shared);
     print_models(&mut out, view, color, shared);
     print_weekly_trend(&mut out, view, color, shared);
 
@@ -619,6 +622,44 @@ fn print_daily(out: &mut String, view: &WeeklyView, color: Color, shared: &Share
     print_bar_rows(out, &view.daily, color, shared);
 }
 
+/// Section 4b — the ChatGPT dashboard's daily share of the weekly limit.
+fn print_limit_usage(out: &mut String, view: &WeeklyView, color: Color, shared: &SharedArgs) {
+    const DAYS: usize = 14;
+    let days = &view.limit_usage[view.limit_usage.len().saturating_sub(DAYS)..];
+    if days.iter().all(|day| day.used_percent <= 0.0) {
+        return;
+    }
+    out.push_str(&format!(
+        "\n  weekly limit used · by day · {}d\n",
+        days.len()
+    ));
+    let max = days
+        .iter()
+        .map(|day| day.used_percent)
+        .fold(0.0_f64, f64::max);
+    for day in days {
+        out.push_str("    ");
+        out.push_str(&crate::color(shared, day.date.clone(), Color::Grey));
+        out.push_str("   ");
+        out.push_str(&crate::color(
+            shared,
+            format!("{:>4}", percent_label(day.used_percent)),
+            color,
+        ));
+        out.push_str("   ");
+        out.push_str(&mini_bar(shared, day.used_percent, max, color));
+        if let Some((surface, percent)) = day.surfaces.first() {
+            out.push_str("  ");
+            out.push_str(&crate::color(
+                shared,
+                format!("{surface} {}", percent_label(*percent)),
+                Color::Grey,
+            ));
+        }
+        out.push('\n');
+    }
+}
+
 /// Section 5 — the agent's top models over the trailing month.
 fn print_models(out: &mut String, view: &WeeklyView, color: Color, shared: &SharedArgs) {
     if view.models.is_empty() {
@@ -774,6 +815,7 @@ pub(super) fn weekly_to_json(view: &WeeklyView) -> Value {
         "economics": economics,
         "liveLimits": view.live_limits,
         "resetCreditsAvailable": view.reset_credits_available,
+        "limitUsageDaily": limit_usage_json(&view.limit_usage),
         "window": view.window.as_ref().map(|window| json!({
             "windowMinutes": window.window_minutes,
             "usedPercent": json_float(window.used_percent),
@@ -791,6 +833,26 @@ pub(super) fn weekly_to_json(view: &WeeklyView) -> Value {
         "spendMix": spend_mix_json(&view.spend_mix),
         "weeklyTrend": view.weekly_trend.iter().map(|(week, cost)| json!({ "weekStart": week, "cost": json_float(*cost) })).collect::<Vec<_>>(),
     })
+}
+
+fn limit_usage_json(days: &[LimitUsageDay]) -> Vec<Value> {
+    days.iter()
+        .map(|day| {
+            json!({
+                "date": day.date,
+                "usedPercent": json_float(day.used_percent),
+                "surfaces": day.surfaces.iter().map(|(surface, percent)| json!({
+                    "surface": surface,
+                    "usedPercent": json_float(*percent),
+                })).collect::<Vec<_>>(),
+                "models": day.models.iter().map(|model| json!({
+                    "model": model.model,
+                    "speed": model.speed,
+                    "usedPercent": json_float(model.used_percent),
+                })).collect::<Vec<_>>(),
+            })
+        })
+        .collect()
 }
 
 fn spend_mix_json(items: &[SpendMixItem]) -> Vec<Value> {

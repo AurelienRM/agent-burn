@@ -18,8 +18,16 @@ pub(super) fn snapshot(agent: &str, offline: bool) -> Option<Value> {
             )
         }
         "claude" => {
-            let window = claude::usage_limits(offline)?.seven_day?;
-            (window.utilization, 10080, window.resets_at?)
+            let limits = claude::usage_limits(offline)?;
+            let window = limits.seven_day?;
+            let now = utc_now();
+            let mut weekly = reading(agent, window.utilization, 10080, window.resets_at?, now)?;
+            if let Some(session) = limits.five_hour.and_then(|session| {
+                reading(agent, session.utilization, 300, session.resets_at?, now)
+            }) {
+                weekly["sessionWindow"] = session["window"].clone();
+            }
+            return Some(weekly);
         }
         "cursor" => {
             let account = cursor::load_account(offline)?;
@@ -84,5 +92,14 @@ mod tests {
         let output = reading("codex", 14.0, 10080, reset, now).unwrap();
         assert_eq!(output["observedAt"], now.as_millis());
         assert_eq!(output["window"]["usedPercent"], 14.0);
+    }
+
+    #[test]
+    fn five_hour_reading_reports_elapsed_share_of_the_session() {
+        let now = TimestampMs::from_unix_seconds(1_800_000_000).unwrap();
+        let reset = now.checked_add_millis(3 * 3_600_000).unwrap();
+        let output = reading("claude", 46.0, 300, reset, now).unwrap();
+        assert_eq!(output["window"]["windowMinutes"], 300);
+        assert_eq!(output["window"]["elapsedPercent"], 40.0);
     }
 }
