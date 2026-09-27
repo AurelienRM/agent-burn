@@ -49,13 +49,18 @@ struct ClaudeScopedLimit: Codable, Sendable, Identifiable {
   var id: String { name }
 }
 
+/// One card for every Claude meter: the weekly quota chart, a smaller 5-hour
+/// session chart, then slim rows for model-scoped limits and extra usage.
 struct ClaudeAccountView: View {
+  @Environment(UsageStore.self) private var store
   let account: ClaudeAccount?
   let plan: SubscriptionAgent?
+  private var now: Date { store.quotaCheckDate }
+  private var tint: Color { BurnTheme.color(for: "claude") }
 
   var body: some View {
     GroupBox {
-      VStack(alignment: .leading, spacing: 18) {
+      VStack(alignment: .leading, spacing: 16) {
         HStack {
           Label(
             "Claude " + (plan?.plan ?? "account"), systemImage: "gauge.with.dots.needle.33percent"
@@ -66,38 +71,29 @@ struct ClaudeAccountView: View {
             Text(currency(price) + " / month").foregroundStyle(.secondary)
           }
         }
-        if let account {
-          HStack(alignment: .top, spacing: 28) {
-            limitColumn(
-              title: "Session remaining",
-              used: account.sessionUsedPercent,
-              caption: "of the 5-hour window",
-              reset: account.sessionResetsAtMs)
-            Divider()
-            limitColumn(
-              title: "Weekly remaining",
-              used: account.weeklyUsedPercent,
-              caption: "of the 7-day window",
-              reset: account.weeklyResetsAtMs)
-          }.fixedSize(horizontal: false, vertical: true)
-          ForEach(account.scoped) { window in
-            Divider()
-            limitRow(
-              title: window.name + " weekly",
-              used: window.usedPercent,
-              reset: window.resetsAtMs)
+        weekly
+        Divider()
+        session
+        if let account, !account.scoped.isEmpty || showsExtra(account) {
+          Divider()
+          VStack(spacing: 12) {
+            ForEach(account.scoped) { window in
+              ClaudeMeterRow(
+                title: window.name + " weekly", used: window.usedPercent,
+                detail: "Resets " + claudeDate(window.resetsAtMs))
+            }
+            if showsExtra(account) {
+              ClaudeMeterRow(
+                title: "Extra usage", used: extraUsedPercent(account),
+                value: account.extraUsedUSD.map { extraRemaining(account, used: $0) },
+                detail: account.extraLimitUSD.map { "of " + currency($0) + " limit" }
+                  ?? "Enabled this cycle")
+            }
           }
-          if showsExtra(account) {
-            Divider()
-            extraRow(account)
-          }
+        }
+        if account == nil {
           Text(
-            "Session, weekly and extra-usage meters come from Claude’s live account. Daily spend below is API-equivalent token cost from local logs."
-          )
-          .font(.caption).foregroundStyle(.secondary)
-        } else {
-          Text(
-            "Account limits unavailable. Refresh with live data enabled to retrieve Claude’s session, weekly and extra-usage meters."
+            "Live account limits are unavailable. Refresh with live data enabled to load Claude’s meters."
           )
           .font(.caption).foregroundStyle(.secondary)
         }
@@ -105,70 +101,122 @@ struct ClaudeAccountView: View {
     }
   }
 
-  private func limitColumn(title: String, used: Double?, caption: String, reset: Double?)
-    -> some View
-  {
-    VStack(alignment: .leading, spacing: 8) {
-      Text(title).font(.subheadline.weight(.medium))
-      Text(remainingLabel(used)).font(.title.weight(.semibold)).monospacedDigit()
-      Text(caption).font(.caption).foregroundStyle(.secondary)
-      if let used {
-        ProgressView(value: used, total: 100).tint(.orange)
-        Text(
-          used.formatted(.number.precision(.fractionLength(1))) + "% used · reported by Claude"
+  @ViewBuilder private var weekly: some View {
+    @Bindable var store = store
+    if let forecast = store.forecast(for: "claude") {
+      let range = store.quotaChartRange
+      let samples = store.samples(for: "claude", range: range, now: now)
+      HStack(alignment: .top, spacing: 28) {
+        QuotaSummary(
+          forecast: forecast, samples: samples, now: now,
+          stale: !forecast.isFresh(at: now) || store.quotaError(for: "claude") != nil,
+          staleHelp: store.quotaError(for: "claude")
+            ?? "Showing the last known reading. Update pending.",
+          rates: store.blendRates(for: "claude")
         )
-        .font(.caption).foregroundStyle(.secondary)
+        .frame(width: 236, alignment: .leading)
+        VStack(alignment: .trailing, spacing: 8) {
+          QuotaChartRangePicker(range: $store.quotaChartRange)
+          QuotaChart(forecast: forecast, samples: samples, color: tint, range: range, now: now)
+            .id(range)
+        }
       }
-      Text("Resets " + date(reset, time: title.contains("Session"))).font(.caption)
-        .foregroundStyle(.secondary)
-    }.frame(maxWidth: .infinity, alignment: .leading)
+    } else {
+      ClaudeMeterRow(
+        title: "Weekly", used: account?.weeklyUsedPercent,
+        detail: "Resets " + claudeDate(account?.weeklyResetsAtMs))
+    }
   }
 
-  private func limitRow(title: String, used: Double?, reset: Double?) -> some View {
-    HStack {
-      VStack(alignment: .leading, spacing: 6) {
+  @ViewBuilder private var session: some View {
+    if let forecast = store.forecast(for: claudeSessionQuotaAgent), forecast.reset > now {
+      let samples = store.samples(for: claudeSessionQuotaAgent, range: .rte, now: now)
+      HStack(alignment: .top, spacing: 28) {
+        ClaudeSessionSummary(
+          forecast: forecast, samples: samples, now: now, stale: !forecast.isFresh(at: now)
+        )
+        .frame(width: 236, alignment: .leading)
+        QuotaChart(
+          forecast: forecast, samples: samples, color: tint, compact: true, range: .rte,
+          now: now, height: 120)
+      }
+    } else {
+      ClaudeMeterRow(
+        title: "Session · 5 hours", used: account?.sessionUsedPercent,
+        detail: "Resets " + claudeDate(account?.sessionResetsAtMs, time: true))
+    }
+  }
+}
+
+/// Compact 5-hour session block: remaining, pace, reset time and a short chart.
+struct ClaudeSessionSummary: View {
+  let forecast: Forecast
+  let samples: [QuotaSample]
+  let now: Date
+  var stale = false
+
+  private var paceDelta: Double? {
+    quotaChartReading(at: forecast.observedAt, samples: samples, forecast: forecast, range: .rte)
+      .paceDelta
+  }
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      HStack(spacing: 6) {
+        Text("Session · 5 hours").font(.subheadline.weight(.medium))
+        if stale {
+          Image(systemName: "clock.badge.exclamationmark").foregroundStyle(.orange)
+            .help("Showing the last known reading. Update pending.")
+            .accessibilityLabel("Last known session reading; update pending")
+        }
+      }
+      Text(quotaChartPercentLabel(forecast.remaining))
+        .font(.system(size: 28, weight: .semibold, design: .rounded)).monospacedDigit()
+        .contentTransition(.numericText()).animation(.snappy, value: forecast.remaining)
+        .accessibilityLabel("Session remaining")
+      if let pace = quotaChartDeltaText(paceDelta), let paceDelta {
+        StatusBadge(text: pace, color: paceDelta < -0.05 ? BurnTheme.behind : BurnTheme.ahead)
+          .help("Recorded remaining minus even pace across the 5-hour window.")
+      }
+      Text(
+        "Resets in \(quotaTimeLeft(forecast, now: now)) · "
+          + forecast.reset.formatted(date: .omitted, time: .shortened)
+      )
+      .font(.caption).foregroundStyle(.secondary).monospacedDigit()
+    }
+    .frame(maxWidth: .infinity, alignment: .leading)
+  }
+}
+
+/// Fallback and secondary meters: title, reset detail, remaining value and a thin bar.
+struct ClaudeMeterRow: View {
+  let title: String
+  let used: Double?
+  var value: String? = nil
+  let detail: String
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 6) {
+      HStack(alignment: .firstTextBaseline) {
         Text(title).font(.subheadline.weight(.medium))
-        Text("Resets " + date(reset)).font(.caption).foregroundStyle(.secondary)
+        Text(detail).font(.caption).foregroundStyle(.secondary)
+        Spacer()
+        Text(value ?? remainingLabel(used) + " left")
+          .font(.subheadline.weight(.semibold)).monospacedDigit()
       }
-      Spacer()
-      VStack(alignment: .trailing, spacing: 6) {
-        Text(remainingLabel(used)).font(.title2.weight(.semibold)).monospacedDigit()
-        if let used {
-          ProgressView(value: used, total: 100).tint(.orange)
-          Text(used.formatted(.number.precision(.fractionLength(1))) + "% used")
-            .font(.caption).foregroundStyle(.secondary)
-        }
+      if let used {
+        ProgressView(value: max(0, min(100, 100 - used)), total: 100).tint(.orange)
+          .accessibilityHidden(true)
       }
     }
+    .accessibilityElement(children: .combine)
   }
+}
 
-  private func extraRow(_ account: ClaudeAccount) -> some View {
-    HStack {
-      VStack(alignment: .leading, spacing: 6) {
-        Text("Extra usage").font(.subheadline.weight(.medium))
-        Text(account.extraEnabled == true ? "Enabled this cycle" : "Reported by Claude")
-          .font(.caption).foregroundStyle(.secondary)
-      }
-      Spacer()
-      VStack(alignment: .trailing, spacing: 6) {
-        Text(account.extraUsedUSD.map { extraRemaining(account, used: $0) } ?? "Unavailable")
-          .font(.title2.weight(.semibold)).monospacedDigit()
-        Text("remaining of " + (account.extraLimitUSD.map(currency) ?? "unknown"))
-          .font(.caption).foregroundStyle(.secondary)
-        if let used = extraUsedPercent(account) {
-          ProgressView(value: used, total: 100)
-          Text(used.formatted(.number.precision(.fractionLength(1))) + "% used")
-            .font(.caption).foregroundStyle(.secondary)
-        }
-      }
-    }
-  }
-
-  private func date(_ milliseconds: Double?, time: Bool = false) -> String {
-    guard let milliseconds else { return "Unavailable" }
-    return Date(timeIntervalSince1970: milliseconds / 1000).formatted(
-      date: .abbreviated, time: time ? .shortened : .omitted)
-  }
+func claudeDate(_ milliseconds: Double?, time: Bool = false) -> String {
+  guard let milliseconds else { return "unavailable" }
+  return Date(timeIntervalSince1970: milliseconds / 1000).formatted(
+    date: .abbreviated, time: time ? .shortened : .omitted)
 }
 
 func remainingLabel(_ used: Double?) -> String {
@@ -176,8 +224,9 @@ func remainingLabel(_ used: Double?) -> String {
   return max(0, min(100, 100 - used)).formatted(.number.precision(.fractionLength(1))) + "%"
 }
 
+/// Extra usage is noise until it is switched on or has actually been spent.
 func showsExtra(_ account: ClaudeAccount) -> Bool {
-  account.extraEnabled == true || account.extraUsedUSD != nil || account.extraLimitUSD != nil
+  account.extraEnabled == true || (account.extraUsedUSD ?? 0) > 0
 }
 
 func extraUsedPercent(_ account: ClaudeAccount) -> Double? {
@@ -189,5 +238,5 @@ func extraUsedPercent(_ account: ClaudeAccount) -> Double? {
 }
 
 func extraRemaining(_ account: ClaudeAccount, used: Double) -> String {
-  account.extraLimitUSD.map { currency(max(0, $0 - used)) } ?? currency(used) + " used"
+  account.extraLimitUSD.map { currency(max(0, $0 - used)) + " left" } ?? currency(used) + " used"
 }

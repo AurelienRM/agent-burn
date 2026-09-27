@@ -6,10 +6,12 @@ struct SpendMetric: View {
   let value: String
   var detail = ""
   var body: some View {
-    VStack(alignment: .leading, spacing: 8) {
-      Text(title).font(.system(size: 11)).foregroundStyle(BurnTheme.muted)
-      Text(value).font(.system(size: 27, weight: .medium, design: .rounded)).monospacedDigit()
-      if !detail.isEmpty { Text(detail).font(.system(size: 10)).foregroundStyle(BurnTheme.muted) }
+    VStack(alignment: .leading, spacing: 7) {
+      Text(title).font(.system(size: 11, weight: .medium)).foregroundStyle(BurnTheme.muted)
+      Text(value).font(.system(size: 24, weight: .semibold, design: .rounded)).monospacedDigit()
+        .lineLimit(1).minimumScaleFactor(0.7)
+        .contentTransition(.numericText()).animation(.snappy, value: value)
+      if !detail.isEmpty { Text(detail).font(.system(size: 11)).foregroundStyle(BurnTheme.muted) }
     }.frame(maxWidth: .infinity, alignment: .leading)
   }
 }
@@ -108,6 +110,8 @@ struct QuotaSummary: View {
       Text(quotaChartPercentLabel(forecast.remaining))
         .font(.system(size: compact ? 44 : 42, weight: .semibold, design: .rounded))
         .monospacedDigit()
+        .contentTransition(.numericText())
+        .animation(.snappy, value: forecast.remaining)
         .foregroundStyle(BurnTheme.ink)
         .lineLimit(1)
         .minimumScaleFactor(0.7)
@@ -168,15 +172,7 @@ struct QuotaSummary: View {
   }
 
   private var remainingBar: some View {
-    GeometryReader { geo in
-      ZStack(alignment: .leading) {
-        Capsule().fill(BurnTheme.elevated)
-        Capsule().fill(paceColor.opacity(0.85)).frame(
-          width: geo.size.width * max(0, min(1, forecast.remaining / 100)))
-      }
-    }
-    .frame(height: 5)
-    .accessibilityHidden(true)
+    ShareBar(value: forecast.remaining / 100, tint: paceColor, height: 6)
   }
 
   private func row(_ title: String, _ value: String, detail: String? = nil, help: String)
@@ -401,55 +397,69 @@ struct SourceUsageView: View {
   }
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 26) {
+    VStack(alignment: .leading, spacing: 12) {
       HStack(spacing: 10) {
-        HarnessIcon(agent: agent)
-        VStack(alignment: .leading, spacing: 4) {
-          Text(harnessName(agent)).font(.system(size: 23, weight: .semibold))
-          Text(subscription?.plan ?? "Harness usage").font(.system(size: 12)).foregroundStyle(
-            BurnTheme.muted)
+        HarnessIcon(agent: agent, size: 28)
+        VStack(alignment: .leading, spacing: 2) {
+          Text(harnessName(agent)).font(.system(size: 15, weight: .semibold))
+          Text(subscription?.plan ?? "Harness usage").font(.system(size: 11)).foregroundStyle(
+            BurnTheme.quotaMuted)
         }
         Spacer()
-        PeriodPicker()
+        PeriodPicker(width: 130).controlSize(.small)
       }
+      .padding(.horizontal, 4)
       if let error = store.errors["summary"] { ReportNotice(message: error) }
       if let usage {
         if agent == "cursor", cursorHasPromotionalCredits(store.summary?.cursorAccount),
           let forecast = store.forecast(for: "cursor")
         {
-          QuotaSummary(
-            forecast: forecast,
-            samples: store.samples(
-              for: "cursor", range: store.cursorQuotaChartRange, now: store.quotaCheckDate),
-            now: store.quotaCheckDate,
-            stale: !forecast.isFresh(at: store.quotaCheckDate)
-              || store.quotaError(for: "cursor") != nil,
-            staleHelp: store.quotaError(for: "cursor")
-              ?? "Showing the last known reading. Update pending.",
-            compact: compact,
-            rates: store.blendRates(for: "cursor"),
-            style: .promotionalCredits)
-          QuotaChart(
-            forecast: forecast,
-            samples: store.samples(
-              for: "cursor", range: store.cursorQuotaChartRange, now: store.quotaCheckDate),
-            color: compact
-              ? BurnTheme.quotaColor(for: "cursor") : BurnTheme.color(for: "cursor"),
-            compact: compact, range: store.cursorQuotaChartRange, now: store.quotaCheckDate,
-            resetLabel: QuotaMeterStyle.promotionalCredits.chartResetLabel)
+          VStack(alignment: .leading, spacing: 14) {
+            QuotaSummary(
+              forecast: forecast,
+              samples: store.samples(
+                for: "cursor", range: store.cursorQuotaChartRange, now: store.quotaCheckDate),
+              now: store.quotaCheckDate,
+              stale: !forecast.isFresh(at: store.quotaCheckDate)
+                || store.quotaError(for: "cursor") != nil,
+              staleHelp: store.quotaError(for: "cursor")
+                ?? "Showing the last known reading. Update pending.",
+              compact: compact,
+              rates: store.blendRates(for: "cursor"),
+              style: .promotionalCredits)
+            QuotaChart(
+              forecast: forecast,
+              samples: store.samples(
+                for: "cursor", range: store.cursorQuotaChartRange, now: store.quotaCheckDate),
+              color: compact
+                ? BurnTheme.quotaColor(for: "cursor") : BurnTheme.color(for: "cursor"),
+              compact: compact, range: store.cursorQuotaChartRange, now: store.quotaCheckDate,
+              resetLabel: QuotaMeterStyle.promotionalCredits.chartResetLabel)
+          }
+          .burnCard(padding: 14, radius: 12)
         } else if agent == "cursor" {
           CursorAccountView(account: store.summary?.cursorAccount, plan: subscription)
         } else if agent == "claude" {
           ClaudeAccountView(account: store.summary?.claudeAccount, plan: subscription)
         }
-        HStack {
-          SpendMetric(
-            title: "Total spend", value: currency(usage.totalCost),
-            detail: store.period.label + " · API-equivalent")
-          SpendMetric(title: "Total tokens", value: tokens(usage.totalTokens))
+        HStack(spacing: 10) {
+          MetricTile(
+            title: "Spend", value: currency(usage.totalCost),
+            detail: store.period.label + " · API-equivalent", symbol: "dollarsign",
+            compact: true
+          )
+          .burnCard(padding: 12, radius: 12)
+          MetricTile(
+            title: "Tokens", value: tokens(usage.totalTokens), detail: "Input, output and cache",
+            symbol: "square.stack.3d.up.fill", tint: .blue, compact: true
+          )
+          .burnCard(padding: 12, radius: 12)
           if !compact, let price = subscription?.pricePerMonth {
-            SpendMetric(
-              title: "Monthly plan", value: currency(price), detail: subscription?.plan ?? "")
+            MetricTile(
+              title: "Monthly plan", value: currency(price), detail: subscription?.plan ?? "",
+              symbol: "creditcard.fill", tint: .purple, compact: true
+            )
+            .burnCard(padding: 12, radius: 12)
           }
         }
         if let daily = usage.daily, !daily.isEmpty,
@@ -463,6 +473,7 @@ struct SourceUsageView: View {
             scope: agent == "cursor" && !cursorHasPromotionalCredits(store.summary?.cursorAccount)
               ? $cursorScope : nil,
             domain: store.chartDomain)
+          .burnCard(padding: 14, radius: 12)
         }
         if let models = usage.models, !models.isEmpty {
           let shown =
@@ -479,6 +490,7 @@ struct SourceUsageView: View {
               }.font(.system(size: 12)).monospacedDigit()
             }
           }
+          .burnCard(padding: 14, radius: 12)
         }
         if !compact, let breakdown = usage.tokenBreakdown {
           VStack(alignment: .leading, spacing: 14) {
@@ -497,6 +509,7 @@ struct SourceUsageView: View {
               .font(.system(size: 12)).monospacedDigit()
             }
           }
+          .burnCard(padding: 14, radius: 12)
         }
       } else {
         ReportNotice(
@@ -513,11 +526,12 @@ struct SourceUsageView: View {
 
 struct PeriodPicker: View {
   @Environment(UsageStore.self) private var store
+  var width: CGFloat = 160
   var body: some View {
     @Bindable var store = store
     Picker("Period", selection: $store.period) {
       ForEach(UsagePeriod.allCases) { period in Text(period.label).tag(period) }
-    }.labelsHidden().frame(width: 160)
+    }.labelsHidden().frame(width: width)
   }
 }
 

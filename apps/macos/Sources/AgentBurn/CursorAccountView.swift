@@ -35,15 +35,12 @@ struct CursorAccountView: View {
   }
 
   var body: some View {
-    GroupBox {
+    Group {
       VStack(alignment: .leading, spacing: 18) {
-        HStack {
-          Label("Cursor " + (plan?.plan ?? "account"), systemImage: "creditcard")
-            .font(.headline)
-          Spacer()
-          if let price = plan?.pricePerMonth {
-            Text(currency(price) + " / month").foregroundStyle(.secondary)
-          }
+        CardHeader(
+          title: "Cursor " + (plan?.plan ?? "account"), symbol: "creditcard.fill", tint: .purple
+        ) {
+          if let price = plan?.pricePerMonth { Text(currency(price) + " / month") }
         }
         if let account {
           if let forecast = promoForecast, cursorHasPromotionalCredits(account) {
@@ -62,8 +59,9 @@ struct CursorAccountView: View {
           )
           .font(.caption).foregroundStyle(.secondary)
         }
-      }.padding(12)
+      }
     }
+    .burnCard(padding: 18)
   }
 
   @ViewBuilder private func promoMeter(_ forecast: Forecast, account: CursorAccount) -> some View {
@@ -117,11 +115,11 @@ struct CursorAccountView: View {
       VStack(alignment: .leading, spacing: 8) {
         Text("Included allowance").font(.subheadline.weight(.medium))
         Text(account.includedRemainingUSD.map(currency) ?? "Unavailable")
-          .font(.title.weight(.semibold)).monospacedDigit()
+          .font(.system(size: 30, weight: .semibold, design: .rounded)).monospacedDigit()
         Text("remaining of " + (account.includedLimitUSD.map(currency) ?? "unknown"))
           .font(.caption).foregroundStyle(.secondary)
         if let used = account.includedPercentUsed {
-          ProgressView(value: used, total: 100).tint(.purple)
+          ShareBar(value: used / 100, tint: .purple, height: 6)
           Text(
             used.formatted(.number.precision(.fractionLength(1)))
               + "% used · reported by Cursor"
@@ -160,7 +158,7 @@ struct CursorAccountView: View {
           Text("remaining of " + (grant.totalUSD.map(currency) ?? "unknown"))
             .font(.caption).foregroundStyle(.secondary)
           if let used = grantUsedPercent(grant) {
-            ProgressView(value: used, total: 100)
+            ShareBar(value: used / 100, tint: .purple, height: 6)
             Text(
               used.formatted(.number.precision(.fractionLength(1))) + "% used"
             )

@@ -6,18 +6,12 @@ struct CompactHarnessView: View {
   @State private var showsDetails = false
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 16) {
-      HStack(spacing: 8) {
-        HarnessIcon(agent: agent, size: 22)
-        Text(harnessName(agent)).font(.system(size: 13, weight: .semibold))
-        Spacer()
-        Text(store.reports[agent]?.plan ?? "Subscription")
-          .font(.system(size: 12)).foregroundStyle(BurnTheme.quotaMuted).lineLimit(1)
-      }
-
+    VStack(alignment: .leading, spacing: 12) {
       if let forecast = store.forecast(for: agent) {
         let range = store.chartRange(for: agent)
-        QuotaSummary(
+        VStack(alignment: .leading, spacing: 14) {
+          header
+          QuotaSummary(
           forecast: forecast,
           samples: store.samples(
             for: agent, range: range, now: store.quotaCheckDate),
@@ -37,26 +31,32 @@ struct CompactHarnessView: View {
           color: BurnTheme.quotaColor(for: agent), compact: true,
           range: range, now: store.quotaCheckDate)
 
-        if let short = store.summary?.subscription?.agents.first(where: { $0.agent == agent })?
-          .shortWindow
-        {
-          detail(
-            "\(short.label) limit",
-            "\(max(0, 100 - short.usedPercent).formatted(.number.precision(.fractionLength(0))))% remaining"
-          )
+          if let short = store.summary?.subscription?.agents.first(where: { $0.agent == agent })?
+            .shortWindow
+          {
+            detail(
+              "\(short.label) limit",
+              "\(max(0, 100 - short.usedPercent).formatted(.number.precision(.fractionLength(0))))% remaining"
+            )
+          }
         }
+        .burnCard(padding: 14, radius: 12)
       } else {
         VStack(alignment: .leading, spacing: 10) {
+          header
+          Spacer(minLength: 4)
           Text(store.isLoading ? "Reading usage…" : "Quota unavailable")
-            .font(.system(size: 24, weight: .semibold))
+            .font(.system(size: 20, weight: .semibold))
           Text(
             store.isLoading
               ? "Loading your subscription limits."
               : "Sign in to \(harnessName(agent)) and run a session, then refresh."
           )
-          .font(.system(size: 13)).foregroundStyle(BurnTheme.quotaMuted)
+          .font(.system(size: 12)).foregroundStyle(BurnTheme.quotaMuted)
           .fixedSize(horizontal: false, vertical: true)
-        }.frame(maxWidth: .infinity, minHeight: 150, alignment: .leading)
+        }
+        .frame(maxWidth: .infinity, minHeight: 150, alignment: .topLeading)
+        .burnCard(padding: 14, radius: 12)
       }
 
       if let error = store.errors[agent] { ReportNotice(message: error) }
@@ -86,8 +86,22 @@ struct CompactHarnessView: View {
             }
           }.padding(.top, 12)
         }
-        .font(.system(size: 12)).tint(BurnTheme.quotaMuted)
+        .font(.system(size: 12, weight: .medium)).tint(BurnTheme.quotaMuted)
+        .burnCard(padding: 12, radius: 12)
       }
+    }
+  }
+
+  private var header: some View {
+    HStack(spacing: 8) {
+      HarnessIcon(agent: agent, size: 22)
+      Text(harnessName(agent)).font(.system(size: 13, weight: .semibold))
+      Spacer()
+      Text(store.reports[agent]?.plan ?? "Subscription")
+        .font(.system(size: 11, weight: .medium)).foregroundStyle(BurnTheme.quotaMuted)
+        .lineLimit(1)
+        .padding(.horizontal, 8).padding(.vertical, 3)
+        .background(BurnTheme.track, in: Capsule())
     }
   }
 

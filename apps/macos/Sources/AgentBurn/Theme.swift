@@ -10,6 +10,17 @@ enum BurnTheme {
   static let green = Color.green
   static let line = Color(nsColor: .separatorColor).opacity(0.5)
   static let grid = Color(nsColor: .separatorColor)
+  static let flame = adaptiveQuotaColor(
+    light: NSColor(red: 0.86, green: 0.36, blue: 0.05, alpha: 1),
+    dark: NSColor(red: 1, green: 0.52, blue: 0.2, alpha: 1))
+  static let card = adaptiveQuotaColor(
+    light: NSColor(white: 1, alpha: 0.9), dark: NSColor(white: 1, alpha: 0.055))
+  static let cardStroke = adaptiveQuotaColor(
+    light: NSColor(white: 0, alpha: 0.07), dark: NSColor(white: 1, alpha: 0.08))
+  static let track = adaptiveQuotaColor(
+    light: NSColor(white: 0, alpha: 0.07), dark: NSColor(white: 1, alpha: 0.1))
+  static let hover = adaptiveQuotaColor(
+    light: NSColor(white: 0, alpha: 0.04), dark: NSColor(white: 1, alpha: 0.05))
   // Pace status: recorded remaining above the ideal line is ahead, below is behind.
   static let ahead = Color.green
   static let behind = Color.red
@@ -39,7 +50,14 @@ enum BurnTheme {
     case "codex": green
     case "claude": .orange
     case "cursor": .purple
-    default: .blue
+    case "opencode": .indigo
+    case "openclaw": .red
+    case "droid": .teal
+    case "gemini": .blue
+    case "pi": .yellow
+    case "kimi": .cyan
+    case "amp": .pink
+    default: .gray
     }
   }
 }
@@ -116,6 +134,7 @@ struct RefreshFooter: View {
         Task { await store.refresh() }
       } label: {
         Image(systemName: "arrow.clockwise")
+          .symbolEffect(.pulse, isActive: store.isLoading)
       }
       .buttonStyle(.plain).disabled(store.isLoading)
       .help("Refresh usage").accessibilityLabel("Refresh usage")
@@ -127,10 +146,137 @@ struct RefreshFooter: View {
 struct ReportNotice: View {
   let message: String
   var body: some View {
-    Label(message, systemImage: "info.circle")
-      .font(.system(size: 12)).foregroundStyle(BurnTheme.accent)
+    Label(message, systemImage: "exclamationmark.circle")
+      .font(.system(size: 12)).foregroundStyle(BurnTheme.flame)
       .fixedSize(horizontal: false, vertical: true)
       .padding(12).frame(maxWidth: .infinity, alignment: .leading)
-      .background(BurnTheme.accent.opacity(0.07), in: RoundedRectangle(cornerRadius: 8))
+      .background(
+        BurnTheme.flame.opacity(0.08), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
   }
+}
+
+struct BurnCardModifier: ViewModifier {
+  var padding: CGFloat = 16
+  var radius: CGFloat = 14
+  func body(content: Content) -> some View {
+    content
+      .padding(padding)
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .background(BurnTheme.card, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
+      .overlay(
+        RoundedRectangle(cornerRadius: radius, style: .continuous)
+          .strokeBorder(BurnTheme.cardStroke, lineWidth: 1)
+      )
+      .shadow(color: .black.opacity(0.04), radius: 6, y: 2)
+  }
+}
+
+extension View {
+  func burnCard(padding: CGFloat = 16, radius: CGFloat = 14) -> some View {
+    modifier(BurnCardModifier(padding: padding, radius: radius))
+  }
+}
+
+struct IconBadge: View {
+  let symbol: String
+  var tint: Color = BurnTheme.flame
+  var size: CGFloat = 22
+  var body: some View {
+    Image(systemName: symbol)
+      .font(.system(size: size * 0.5, weight: .semibold))
+      .foregroundStyle(tint)
+      .frame(width: size, height: size)
+      .background(tint.opacity(0.14), in: RoundedRectangle(cornerRadius: size * 0.3, style: .continuous))
+      .accessibilityHidden(true)
+  }
+}
+
+struct CardHeader<Trailing: View>: View {
+  let title: String
+  var symbol: String? = nil
+  var tint: Color = BurnTheme.flame
+  @ViewBuilder var trailing: Trailing
+  var body: some View {
+    HStack(spacing: 8) {
+      if let symbol { IconBadge(symbol: symbol, tint: tint) }
+      Text(title).font(.system(size: 13, weight: .semibold))
+      Spacer(minLength: 8)
+      trailing.font(.system(size: 11)).foregroundStyle(BurnTheme.muted)
+    }
+  }
+}
+
+extension CardHeader where Trailing == EmptyView {
+  init(title: String, symbol: String? = nil, tint: Color = BurnTheme.flame) {
+    self.init(title: title, symbol: symbol, tint: tint) { EmptyView() }
+  }
+}
+
+struct MetricTile: View {
+  let title: String
+  let value: String
+  var detail = ""
+  var symbol: String? = nil
+  var tint: Color = BurnTheme.flame
+  var compact = false
+  var body: some View {
+    VStack(alignment: .leading, spacing: compact ? 6 : 8) {
+      HStack(spacing: 7) {
+        if let symbol { IconBadge(symbol: symbol, tint: tint, size: compact ? 18 : 20) }
+        Text(title).font(.system(size: compact ? 11 : 12, weight: .medium))
+          .foregroundStyle(compact ? BurnTheme.quotaMuted : BurnTheme.muted).lineLimit(1)
+      }
+      Text(value)
+        .font(.system(size: compact ? 21 : 28, weight: .semibold, design: .rounded))
+        .monospacedDigit().lineLimit(1).minimumScaleFactor(0.6)
+        .contentTransition(.numericText())
+        .animation(.snappy, value: value)
+      if !detail.isEmpty {
+        Text(detail).font(.system(size: compact ? 10 : 11))
+          .foregroundStyle(compact ? BurnTheme.quotaMuted : BurnTheme.muted).lineLimit(1)
+      }
+    }
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .accessibilityElement(children: .combine)
+  }
+}
+
+struct ShareBar: View {
+  let value: Double
+  var tint: Color = BurnTheme.flame
+  var height: CGFloat = 5
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
+  var body: some View {
+    GeometryReader { geometry in
+      ZStack(alignment: .leading) {
+        Capsule().fill(BurnTheme.track)
+        Capsule().fill(tint.gradient)
+          .frame(width: max(height, geometry.size.width * clamped))
+          .opacity(clamped > 0 ? 1 : 0)
+      }
+    }
+    .frame(height: height)
+    .animation(reduceMotion ? nil : .smooth(duration: 0.5), value: clamped)
+    .accessibilityHidden(true)
+  }
+  private var clamped: Double { max(0, min(1, value)) }
+}
+
+struct HoverRow: ViewModifier {
+  @State private var hovering = false
+  func body(content: Content) -> some View {
+    content
+      .padding(.horizontal, 8).padding(.vertical, 6)
+      .background(
+        hovering ? BurnTheme.hover : .clear,
+        in: RoundedRectangle(cornerRadius: 9, style: .continuous)
+      )
+      .contentShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+      .onHover { hovering = $0 }
+      .animation(.easeOut(duration: 0.12), value: hovering)
+  }
+}
+
+extension View {
+  func hoverRow() -> some View { modifier(HoverRow()) }
 }

@@ -28,7 +28,7 @@ struct AgentBurnApp: App {
     Window("Agent Burn", id: "overview") {
       DashboardView().environment(store)
     }
-    .defaultSize(width: 1060, height: 780)
+    .defaultSize(width: 1240, height: 820)
     .windowStyle(.titleBar)
     .windowToolbarStyle(.unified)
     .commands { UpdateCommands() }

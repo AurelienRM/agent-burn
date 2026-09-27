@@ -8,83 +8,175 @@ struct MenuPopover: View {
   var body: some View {
     @Bindable var store = store
     VStack(spacing: 0) {
-      HStack {
-        Label("Agent Burn", systemImage: "flame.fill").font(.system(size: 13, weight: .semibold))
-          .foregroundStyle(BurnTheme.ink)
+      HStack(spacing: 10) {
+        Image(nsImage: AppLogo.window).resizable().interpolation(.high)
+          .frame(width: 26, height: 26).accessibilityHidden(true)
+        VStack(alignment: .leading, spacing: 1) {
+          Text("Agent Burn").font(.system(size: 13, weight: .semibold))
+          Text(store.quotaSource.label + " " + menuBarQuotaText(store.remainingPercent))
+            .font(.system(size: 11)).foregroundStyle(BurnTheme.quotaMuted).monospacedDigit()
+        }
         Spacer()
-        SettingsLink { Image(systemName: "gearshape") }
-          .buttonStyle(.plain).foregroundStyle(BurnTheme.muted).help("Settings")
-          .accessibilityLabel("Settings")
-          .frame(minWidth: 24, minHeight: 24)
-      }.padding(.horizontal, 22).padding(.top, 19).padding(.bottom, 17)
-      HarnessTabs(selection: $store.selection, compact: true)
-        .padding(4)
-        .padding(.horizontal, 18).padding(.bottom, 20)
+        if store.isLoading {
+          ProgressView().controlSize(.small).accessibilityLabel("Updating usage")
+        }
+      }.padding(.horizontal, 18).padding(.top, 16).padding(.bottom, 14)
+      PopoverTabs(selection: $store.selection)
+        .padding(.horizontal, 14).padding(.bottom, 14)
       ScrollView {
         Group {
           if tab == "summary" {
-            OverviewView(compact: true)
+            OverviewView()
           } else if ["codex", "claude"].contains(tab) {
             HarnessView(agent: tab, compact: true)
           } else {
             SourceUsageView(agent: tab, compact: true)
           }
-        }.padding(.horizontal, 22).padding(.bottom, 20)
-      }.frame(height: ["codex", "claude"].contains(tab) ? 440 : 520)
+        }
+        .id(tab)
+        .transition(.opacity.combined(with: .offset(y: 6)))
+        .padding(.horizontal, 14).padding(.bottom, 16)
+      }
+      .scrollIndicators(.never)
+      .frame(height: ["codex", "claude"].contains(tab) ? 460 : 520)
+      .animation(.smooth(duration: 0.25), value: tab)
       Rectangle().fill(BurnTheme.line).frame(height: 1)
       VStack(spacing: 10) {
         RefreshFooter(source: ["codex", "claude"].contains(tab) ? tab : "summary", compact: true)
-        HStack {
+        HStack(spacing: 8) {
           Button {
             store.selection = tab
             openWindow(id: "overview")
             NSApp.activate(ignoringOtherApps: true)
           } label: {
-            HStack {
-              Text("Open dashboard")
-              Spacer()
-              Image(systemName: "arrow.up.right")
-            }.font(.system(size: 12, weight: .medium))
-              .padding(.horizontal, 12).padding(.vertical, 10)
-              .background(BurnTheme.elevated, in: RoundedRectangle(cornerRadius: 7))
-          }.buttonStyle(.plain)
+            Label("Open dashboard", systemImage: "macwindow")
+              .frame(maxWidth: .infinity)
+          }
+          .buttonStyle(PopoverPillButtonStyle())
+          SettingsLink {
+            Image(systemName: "gearshape")
+          }
+          .buttonStyle(PopoverPillButtonStyle(square: true))
+          .help("Settings").accessibilityLabel("Settings")
           Button {
             NSApp.terminate(nil)
           } label: {
-            Image(systemName: "power")
+            Label("Quit", systemImage: "power")
           }
-          .buttonStyle(.plain).foregroundStyle(BurnTheme.muted).help("Quit Agent Burn")
-          .accessibilityLabel("Quit Agent Burn").padding(.leading, 8)
+          .buttonStyle(PopoverPillButtonStyle())
+          .help("Quit Agent Burn").accessibilityLabel("Quit Agent Burn")
         }
-      }.padding(18)
+      }.padding(.horizontal, 14).padding(.vertical, 12)
     }
     .frame(width: 440).background(.regularMaterial).foregroundStyle(BurnTheme.ink)
+    .tint(BurnTheme.flame)
   }
 
+}
+
+private struct PopoverTabs: View {
+  @Binding var selection: String
+  @Namespace private var pill
+  private let tabs: [(id: String, label: String)] = [
+    ("summary", "General"), ("codex", "Codex"), ("claude", "Claude"), ("cursor", "Cursor"),
+  ]
+  var body: some View {
+    HStack(spacing: 2) {
+      ForEach(tabs, id: \.id) { tab in
+        let active = selection == tab.id
+        Button {
+          withAnimation(.snappy(duration: 0.28)) { selection = tab.id }
+        } label: {
+          HStack(spacing: 5) {
+            if tab.id == "summary" {
+              Image(systemName: "square.grid.2x2").font(.system(size: 10, weight: .semibold))
+            } else {
+              HarnessIcon(agent: tab.id, size: 13)
+            }
+            Text(tab.label)
+          }
+          .font(.system(size: 12, weight: active ? .semibold : .medium))
+          .foregroundStyle(active ? BurnTheme.ink : BurnTheme.quotaMuted)
+          .frame(maxWidth: .infinity).padding(.vertical, 6)
+          .background {
+            if active {
+              RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(BurnTheme.card)
+                .shadow(color: .black.opacity(0.12), radius: 2, y: 1)
+                .matchedGeometryEffect(id: "pill", in: pill)
+            }
+          }
+          .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(active ? .isSelected : [])
+      }
+    }
+    .padding(3)
+    .background(BurnTheme.track, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+    .accessibilityElement(children: .contain)
+    .accessibilityLabel("Harness")
+  }
+}
+
+private struct PopoverPillButtonStyle: ButtonStyle {
+  var square = false
+  func makeBody(configuration: Configuration) -> some View {
+    PopoverPill(configuration: configuration, square: square)
+  }
+}
+
+private struct PopoverPill: View {
+  let configuration: ButtonStyle.Configuration
+  let square: Bool
+  @State private var hovering = false
+  var body: some View {
+    configuration.label
+      .font(.system(size: 12, weight: .medium))
+      .padding(.horizontal, square ? 0 : 12).padding(.vertical, 8)
+      .frame(width: square ? 34 : nil)
+      .background(
+        hovering || configuration.isPressed ? BurnTheme.track : BurnTheme.hover,
+        in: RoundedRectangle(cornerRadius: 9, style: .continuous)
+      )
+      .overlay(
+        RoundedRectangle(cornerRadius: 9, style: .continuous)
+          .strokeBorder(BurnTheme.cardStroke, lineWidth: 1)
+      )
+      .scaleEffect(configuration.isPressed ? 0.97 : 1)
+      .contentShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+      .onHover { hovering = $0 }
+      .animation(.easeOut(duration: 0.12), value: hovering)
+  }
 }
 
 struct DashboardView: View {
   @Environment(UsageStore.self) private var store
   var body: some View {
-    @Bindable var store = store
-    VStack(spacing: 0) {
-      ScrollView {
-        NativeUsageView(agent: store.selection == "summary" ? nil : store.selection)
-          .padding(24).frame(maxWidth: 1280).frame(maxWidth: .infinity)
+    NavigationSplitView {
+      DashboardSidebar()
+        .navigationSplitViewColumnWidth(min: 200, ideal: 224, max: 300)
+    } detail: {
+      VStack(spacing: 0) {
+        ScrollView {
+          NativeUsageView(agent: store.selection == "summary" ? nil : store.selection)
+            .id(store.selection)
+            .transition(.opacity.combined(with: .offset(y: 8)))
+            .padding(24).frame(maxWidth: 1280).frame(maxWidth: .infinity)
+        }
+        .animation(.smooth(duration: 0.3), value: store.selection)
+        Divider()
+        RefreshFooter(source: "summary").padding(.horizontal, 20).padding(.vertical, 9)
       }
-      Divider()
-      RefreshFooter(source: "summary").padding(.horizontal, 20).padding(.vertical, 9)
+      .background(BurnTheme.background)
+      .navigationTitle(store.selection == "summary" ? "Overview" : harnessName(store.selection))
+      .navigationSubtitle(store.period.label)
     }
-    .frame(minWidth: 900, minHeight: 650)
-    .background(BurnTheme.background)
+    .frame(minWidth: 980, minHeight: 650)
+    .tint(BurnTheme.flame)
     .toolbar {
       ToolbarItem(placement: .navigation) {
         QuotaSourceMenu()
-      }
-      ToolbarItem(placement: .principal) {
-        HarnessTabs(selection: $store.selection)
-          .padding(.horizontal, 6)
-          .fixedSize(horizontal: true, vertical: false)
       }
       ToolbarItemGroup(placement: .primaryAction) {
         Button {
@@ -99,29 +191,83 @@ struct DashboardView: View {
   }
 }
 
-struct HarnessTabs: View {
+private struct DashboardSidebar: View {
   @Environment(UsageStore.self) private var store
-  @Binding var selection: String
-  var compact = false
-  private var extra: [String] {
-    store.knownAgents.filter { !["codex", "claude", "cursor"].contains($0) }
+  private let subscriptions = ["codex", "claude", "cursor"]
+  private var others: [String] {
+    store.knownAgents.filter { !subscriptions.contains($0) }
   }
-  var body: some View {
-    HStack(spacing: 8) {
-      Picker("Harness", selection: $selection) {
-        Text("General").tag("summary")
-        Text("Codex").tag("codex")
-        Text("Claude").tag("claude")
-        Text("Cursor").tag("cursor")
-      }.pickerStyle(.segmented).labelsHidden()
-      if !compact, !extra.isEmpty {
-        Menu(extra.contains(selection) ? harnessName(selection) : "More") {
-          ForEach(extra, id: \.self) { agent in Button(harnessName(agent)) { selection = agent } }
-        }.fixedSize()
-      }
-    }.controlSize(.regular)
+  private var selection: Binding<String?> {
+    Binding(get: { store.selection }, set: { if let value = $0 { store.selection = value } })
   }
 
+  var body: some View {
+    List(selection: selection) {
+      row(id: "summary", title: "Overview") {
+        IconBadge(symbol: "flame.fill", size: 20)
+      } trailing: {
+        spend(store.summary?.totals.totalCost)
+      }
+      Section("Subscriptions") {
+        ForEach(subscriptions, id: \.self) { agent in
+          row(id: agent, title: harnessName(agent)) {
+            HarnessIcon(agent: agent, size: 20)
+          } trailing: {
+            quotaBadge(agent)
+          }
+        }
+      }
+      if !others.isEmpty {
+        Section("Agents") {
+          ForEach(others, id: \.self) { agent in
+            row(id: agent, title: harnessName(agent)) {
+              HarnessIcon(agent: agent, size: 20)
+            } trailing: {
+              spend(store.summary?.agents.first { $0.agent == agent }?.totalCost)
+            }
+          }
+        }
+      }
+    }
+    .listStyle(.sidebar)
+  }
+
+  private func row<Icon: View, Trailing: View>(
+    id: String, title: String, @ViewBuilder icon: () -> Icon,
+    @ViewBuilder trailing: () -> Trailing
+  ) -> some View {
+    HStack(spacing: 9) {
+      icon()
+      Text(title).lineLimit(1)
+      Spacer(minLength: 6)
+      trailing()
+    }
+    .padding(.vertical, 2)
+    .tag(id)
+  }
+
+  @ViewBuilder private func spend(_ value: Double?) -> some View {
+    if let value {
+      Text(currency(value)).font(.system(size: 11)).monospacedDigit().foregroundStyle(.secondary)
+    }
+  }
+
+  @ViewBuilder private func quotaBadge(_ agent: String) -> some View {
+    if let source = QuotaSource(rawValue: agent),
+      let remaining = remainingQuota(
+        for: source, forecast: store.forecast(for: agent),
+        cursorAccount: store.summary?.cursorAccount,
+        claudeAccount: store.summary?.claudeAccount)
+    {
+      let tone: Color = remaining < 15 ? BurnTheme.behind : remaining < 35 ? .orange : .green
+      Text(menuBarQuotaText(remaining))
+        .font(.system(size: 10, weight: .semibold)).monospacedDigit()
+        .foregroundStyle(tone)
+        .padding(.horizontal, 6).padding(.vertical, 2)
+        .background(tone.opacity(0.14), in: Capsule())
+        .help("\(source.label) quota remaining")
+    }
+  }
 }
 
 struct QuotaSourceMenu: View {
@@ -183,14 +329,76 @@ struct QuotaSourceSettings: View {
 }
 
 struct SettingsView: View {
+  var body: some View {
+    TabView {
+      Form {
+        LoginItemSettings()
+        AppearanceSettings()
+        QuotaSourceSettings()
+      }
+      .formStyle(.grouped)
+      .tabItem { Label("General", systemImage: "gearshape") }
+      DataSettings()
+        .tabItem { Label("Data", systemImage: "externaldrive") }
+      Form { QuotaCollectionSettings() }
+        .formStyle(.grouped)
+        .tabItem { Label("Background", systemImage: "clock.arrow.circlepath") }
+      Form { UpdateSettings() }
+        .formStyle(.grouped)
+        .tabItem { Label("Updates", systemImage: "arrow.down.circle") }
+      AboutSettings()
+        .tabItem { Label("About", systemImage: "flame") }
+    }
+    .frame(width: 560, height: 520)
+    .tint(BurnTheme.flame)
+  }
+}
+
+private struct AboutSettings: View {
+  var body: some View {
+    VStack(spacing: 14) {
+      Spacer()
+      Image(nsImage: AppLogo.window).resizable().interpolation(.high)
+        .frame(width: 96, height: 96)
+        .shadow(color: .black.opacity(0.18), radius: 10, y: 4)
+        .accessibilityHidden(true)
+      VStack(spacing: 4) {
+        Text("Agent Burn").font(.system(size: 22, weight: .bold, design: .rounded))
+        Text("Version \(bundleVersionText())").font(.system(size: 12))
+          .foregroundStyle(.secondary).monospacedDigit()
+      }
+      Text(
+        "Spend, tokens and subscription limits for your coding agents. Usage is read from local logs and never sent to an Agent Burn service."
+      )
+      .font(.system(size: 12)).foregroundStyle(.secondary)
+      .multilineTextAlignment(.center).frame(maxWidth: 380)
+      HStack(spacing: 10) {
+        Link(destination: URL(string: "https://agent-burn.melvynx.dev")!) {
+          Label("Website", systemImage: "safari")
+        }
+        Link(destination: URL(string: "https://github.com/Melvynx/agent-burn")!) {
+          Label("Source code", systemImage: "chevron.left.forwardslash.chevron.right")
+        }
+        Link(destination: URL(string: "https://agent-burn.melvynx.dev/docs")!) {
+          Label("Docs", systemImage: "book")
+        }
+      }
+      .buttonStyle(.bordered)
+      .controlSize(.regular)
+      Spacer()
+      Text("MIT licensed · Based on ccusage").font(.system(size: 11))
+        .foregroundStyle(.tertiary)
+    }
+    .padding(24)
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+  }
+}
+
+private struct DataSettings: View {
   @Environment(UsageStore.self) private var store
   var body: some View {
     @Bindable var store = store
     Form {
-      LoginItemSettings()
-      AppearanceSettings()
-      QuotaSourceSettings()
-      UpdateSettings()
       Section("Data source") {
         TextField("CLI executable", text: $store.customPath, prompt: Text("Bundled agent-burn"))
           .help("Absolute path to the native agent-burn executable")
@@ -226,8 +434,7 @@ struct SettingsView: View {
           Task { await store.refreshAll() }
         }
       }
-      QuotaCollectionSettings()
     }
-    .formStyle(.grouped).padding(12).frame(width: 560, height: 520)
+    .formStyle(.grouped)
   }
 }
