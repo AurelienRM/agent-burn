@@ -5,7 +5,7 @@ release=0
 [[ "${1:-}" != "--release" ]] || release=1
 version="$(tr -d '\n' < Config/version)"
 if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then echo "Invalid version" >&2; exit 1; fi
-build_number="$(git -C ../.. rev-list --count HEAD)"
+build_number="${AGENT_BURN_BUILD_NUMBER:-$(git -C ../.. rev-list --count HEAD)}"
 swift_args=(--disable-keychain -c release)
 if [[ "$release" == 1 ]]; then
   swift build "${swift_args[@]}" --triple arm64-apple-macosx14.0

@@ -25,6 +25,9 @@ fi
 work="$(mktemp -d "${TMPDIR:-/tmp}/agent-burn-release.XXXXXX")"
 trap 'rm -rf "$work"' EXIT
 git archive HEAD | tar -x -C "$work"
+# The archive has no .git, so the build number comes from this checkout.
+AGENT_BURN_BUILD_NUMBER="$(git rev-list --count HEAD)"
+export AGENT_BURN_BUILD_NUMBER
 cd "$work/apps/macos"
 ./build.sh --release
 archive="$PWD/dist/Agent-Burn-macOS.zip"
