@@ -3,6 +3,7 @@ use std::fs;
 use serde_json::Value;
 
 use super::paths::{codex_usage_sources, collect_codex_usage_files};
+use crate::TimestampMs;
 
 /// A single rate-limit window reported by Codex (e.g. the 5h or weekly window).
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -56,6 +57,12 @@ impl CodexPlanSnapshot {
 /// Newer session files are inspected first. A larger scan window is needed
 /// because recent rollouts often only record model-specific envelopes.
 pub(crate) fn latest_plan_snapshot() -> Option<CodexPlanSnapshot> {
+    latest_logged_snapshot().map(|(_, snapshot)| snapshot)
+}
+
+/// The newest account snapshot in the session logs, with the time Codex logged
+/// it. These values come from the meter Codex enforced on a real request.
+pub(super) fn latest_logged_snapshot() -> Option<(Option<TimestampMs>, CodexPlanSnapshot)> {
     const MAX_FILES_SCANNED: usize = 24;
     const TAIL_BYTES: usize = 64 * 1024;
 
@@ -64,22 +71,40 @@ pub(crate) fn latest_plan_snapshot() -> Option<CodexPlanSnapshot> {
     for source in &sources {
         files.extend(collect_codex_usage_files(&source.dir));
     }
-    // Session file names are timestamp-prefixed, so lexical order is chronological.
-    files.sort();
+    sort_by_session_start(&mut files);
     for file in files.iter().rev().take(MAX_FILES_SCANNED) {
-        if let Some(snapshot) = snapshot_from_file(file, TAIL_BYTES) {
-            return Some(snapshot);
+        if let Some(logged) = logged_snapshot_from_file(file, TAIL_BYTES) {
+            return Some(logged);
         }
     }
     None
 }
 
-fn snapshot_from_file(path: &std::path::Path, tail_bytes: usize) -> Option<CodexPlanSnapshot> {
+/// Session file names are timestamp-prefixed, so ordering by name alone is
+/// chronological across every Codex home. Full paths would rank a whole home
+/// (`~/.codex-video` after `~/.codex`) above newer sessions in another.
+fn sort_by_session_start(files: &mut [std::path::PathBuf]) {
+    files.sort_by(|a, b| a.file_name().cmp(&b.file_name()));
+}
+
+fn logged_snapshot_from_file(
+    path: &std::path::Path,
+    tail_bytes: usize,
+) -> Option<(Option<TimestampMs>, CodexPlanSnapshot)> {
     let contents = tail_string(path, tail_bytes)?;
     contents.lines().rev().find_map(|line| {
-        line.contains("rate_limits")
-            .then(|| snapshot_from_line(line).filter(CodexPlanSnapshot::is_account_limit))?
+        let snapshot = line
+            .contains("rate_limits")
+            .then(|| snapshot_from_line(line))??;
+        snapshot
+            .is_account_limit()
+            .then(|| (logged_at(line), snapshot))
     })
+}
+
+fn logged_at(line: &str) -> Option<TimestampMs> {
+    let value = serde_json::from_str::<Value>(line).ok()?;
+    crate::parse_ts_timestamp(value.get("timestamp")?.as_str()?)
 }
 
 fn tail_string(path: &std::path::Path, max_bytes: usize) -> Option<String> {
@@ -192,9 +217,24 @@ mod tests {
     }
 
     #[test]
+    fn orders_sessions_by_start_time_across_codex_homes() {
+        let mut files = [
+            "/h/.codex/sessions/2026/09/30/rollout-2026-09-30T12-04-41-a.jsonl",
+            "/h/.codex-video/sessions/2026/09/17/rollout-2026-09-17T09-00-00-b.jsonl",
+            "/h/.codex/sessions/2026/09/29/rollout-2026-09-29T08-00-00-c.jsonl",
+        ]
+        .map(std::path::PathBuf::from);
+
+        sort_by_session_start(&mut files);
+
+        assert!(files[2].ends_with("rollout-2026-09-30T12-04-41-a.jsonl"));
+        assert!(files[0].ends_with("rollout-2026-09-17T09-00-00-b.jsonl"));
+    }
+
+    #[test]
     fn prefers_account_envelope_when_file_ends_on_spark() {
         let contents = [
-            r#"{"payload":{"rate_limits":{"limit_id":"codex","primary":{"used_percent":85.0,"window_minutes":10080,"resets_at":9},"plan_type":"pro"}}}"#,
+            r#"{"timestamp":"2026-06-13T10:09:32.856Z","payload":{"rate_limits":{"limit_id":"codex","primary":{"used_percent":85.0,"window_minutes":10080,"resets_at":9},"plan_type":"pro"}}}"#,
             r#"{"payload":{"rate_limits":{"limit_id":"codex_bengalfox","primary":{"used_percent":0.0,"window_minutes":300,"resets_at":1},"secondary":{"used_percent":100.0,"window_minutes":10080,"resets_at":2},"plan_type":null}}}"#,
         ]
         .join("\n");
@@ -203,9 +243,13 @@ mod tests {
         let path = dir.join("session.jsonl");
         std::fs::write(&path, contents).unwrap();
 
-        let snapshot = snapshot_from_file(&path, 64 * 1024).unwrap();
+        let (logged_at, snapshot) = logged_snapshot_from_file(&path, 64 * 1024).unwrap();
 
         std::fs::remove_dir_all(&dir).ok();
+        assert_eq!(
+            logged_at,
+            crate::parse_ts_timestamp("2026-06-13T10:09:32.856Z")
+        );
         assert_eq!(snapshot.plan_type, "pro");
         assert_eq!(snapshot.weekly_window().unwrap().used_percent, 85.0);
     }

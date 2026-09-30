@@ -15,6 +15,13 @@ OAuth token is available and `--offline` is not set. Session `rate_limits`
 envelopes are the fallback. Model-specific Spark meters (`codex_bengalfox`)
 are not the account weekly quota.
 
+`wham/usage` sometimes over-counts the weekly meter for the same window (seen:
+99% while Codex enforced 49%). The live read keeps the lowest of three
+concurrent requests, and a session-log meter from the last ten minutes with the
+same reset replaces a live value that far exceeds it. Session files are ordered
+by file name, which carries the start time, so every Codex home is compared
+chronologically.
+
 Relevant JSONL event:
 
 - `type === "event_msg"`

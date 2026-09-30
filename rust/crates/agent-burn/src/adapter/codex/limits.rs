@@ -6,10 +6,17 @@ use super::{
     paths::codex_home_paths,
     plan::{CodexPlanSnapshot, RateWindow},
 };
+use crate::TimestampMs;
 
 const USAGE_URL: &str = "https://chatgpt.com/backend-api/wham/usage";
 const FETCH_TIMEOUT_SECONDS: u64 = 5;
 const FETCH_MAX_BYTES: u64 = 1_000_000;
+/// How long a session-log meter stays a trustworthy floor for the live meter.
+const LOG_TRUST_MS: i64 = 10 * 60_000;
+/// Concurrent live reads per refresh; the lowest one for the window wins.
+const LIVE_READS: usize = 3;
+/// Two readings belong to the same weekly window when their resets agree this closely.
+const SAME_WINDOW_SECONDS: i64 = 60;
 
 /// Prefer the live ChatGPT account meter. Fall back to session logs only when
 /// the live snapshot is missing, or is missing a weekly window or plan name.
@@ -41,12 +48,89 @@ fn overlay_logs(mut live: CodexPlanSnapshot) -> CodexPlanSnapshot {
 /// Fetch the signed-in Codex account weekly limit from ChatGPT, mirroring the
 /// dashboard meter. Returns `None` when offline, when no token is available, or
 /// on any network error (never fatal).
+///
+/// The usage endpoint sometimes over-counts the weekly meter for the same window
+/// (seen: 99% while Codex enforced 49%). An over-count never under-reports, so
+/// concurrent reads keep the lowest one, and a fresh session-log meter that the
+/// live value far exceeds replaces it.
 pub(crate) fn usage_limits(offline: bool) -> Option<CodexPlanSnapshot> {
     if offline {
         return None;
     }
     let token = access_token()?;
-    fetch_usage_limits(&token)
+    let others = (1..LIVE_READS)
+        .map(|_| {
+            let token = token.clone();
+            std::thread::spawn(move || fetch_usage_limits(&token))
+        })
+        .collect::<Vec<_>>();
+    let first = fetch_usage_limits(&token);
+    let live = others
+        .into_iter()
+        .map(|read| read.join().ok().flatten())
+        .fold(first, lower_meter)?;
+    Some(prefer_fresh_logs(
+        live,
+        super::plan::latest_logged_snapshot(),
+        crate::utc_now(),
+    ))
+}
+
+fn lower_meter(
+    first: Option<CodexPlanSnapshot>,
+    second: Option<CodexPlanSnapshot>,
+) -> Option<CodexPlanSnapshot> {
+    match (first, second) {
+        (Some(first), Some(second)) => match (first.weekly_window(), second.weekly_window()) {
+            (Some(a), Some(b)) if same_window(a, b) && b.used_percent < a.used_percent => {
+                Some(second)
+            }
+            _ => Some(first),
+        },
+        (first, second) => first.or(second),
+    }
+}
+
+fn prefer_fresh_logs(
+    mut live: CodexPlanSnapshot,
+    logged: Option<(Option<TimestampMs>, CodexPlanSnapshot)>,
+    now: TimestampMs,
+) -> CodexPlanSnapshot {
+    let Some((Some(logged_at), logs)) = logged else {
+        return live;
+    };
+    let (Some(live_week), Some(log_week)) = (live.weekly_window(), logs.weekly_window()) else {
+        return live;
+    };
+    let fresh = now.duration_since(logged_at) <= LOG_TRUST_MS;
+    if fresh
+        && same_window(live_week, log_week)
+        && looks_overcounted(live_week.used_percent, log_week.used_percent)
+    {
+        for window in [&mut live.primary, &mut live.secondary]
+            .into_iter()
+            .flatten()
+        {
+            if *window == live_week {
+                window.used_percent = log_week.used_percent;
+            }
+        }
+    }
+    live
+}
+
+fn same_window(a: RateWindow, b: RateWindow) -> bool {
+    a.window_minutes == b.window_minutes
+        && matches!(
+            (a.resets_at, b.resets_at),
+            (Some(a), Some(b)) if (a - b).abs() <= SAME_WINDOW_SECONDS
+        )
+}
+
+/// An over-count roughly doubles the meter; real usage never climbs that far
+/// above the enforced value within `LOG_TRUST_MS`.
+fn looks_overcounted(live: f64, logged: f64) -> bool {
+    live > logged * 1.5 + 3.0
 }
 
 pub(super) fn access_token() -> Option<String> {
@@ -216,6 +300,72 @@ mod tests {
             })
         );
         assert!(snapshot.short_window().is_none());
+    }
+
+    fn weekly(used_percent: f64, resets_at: i64) -> CodexPlanSnapshot {
+        CodexPlanSnapshot {
+            plan_type: "pro".to_string(),
+            limit_id: Some("codex".to_string()),
+            primary: Some(RateWindow {
+                used_percent,
+                window_minutes: 10080,
+                resets_at: Some(resets_at),
+            }),
+            secondary: None,
+            reset_credits_available: None,
+        }
+    }
+
+    fn weekly_used(snapshot: &CodexPlanSnapshot) -> f64 {
+        snapshot.weekly_window().unwrap().used_percent
+    }
+
+    #[test]
+    fn keeps_the_lower_of_two_reads_for_the_same_window() {
+        let kept = lower_meter(Some(weekly(99.0, 1_000)), Some(weekly(49.0, 1_010))).unwrap();
+        assert_eq!(weekly_used(&kept), 49.0);
+
+        let kept = lower_meter(Some(weekly(49.0, 1_000)), Some(weekly(99.0, 1_000))).unwrap();
+        assert_eq!(weekly_used(&kept), 49.0);
+
+        let kept = lower_meter(None, Some(weekly(99.0, 1_000))).unwrap();
+        assert_eq!(weekly_used(&kept), 99.0);
+    }
+
+    #[test]
+    fn keeps_the_first_read_when_the_window_changed_between_reads() {
+        let kept = lower_meter(Some(weekly(80.0, 1_000)), Some(weekly(2.0, 605_800))).unwrap();
+        assert_eq!(weekly_used(&kept), 80.0);
+    }
+
+    #[test]
+    fn replaces_an_overcount_with_a_fresh_log_meter() {
+        let now = crate::parse_ts_timestamp("2026-09-30T04:10:00Z").unwrap();
+        let logged_at = crate::parse_ts_timestamp("2026-09-30T04:05:00Z");
+        let healed = prefer_fresh_logs(
+            weekly(99.0, 1_000),
+            Some((logged_at, weekly(49.0, 1_002))),
+            now,
+        );
+        assert_eq!(weekly_used(&healed), 49.0);
+    }
+
+    #[test]
+    fn keeps_the_live_meter_when_logs_cannot_contradict_it() {
+        let now = crate::parse_ts_timestamp("2026-09-30T04:10:00Z").unwrap();
+        let fresh = crate::parse_ts_timestamp("2026-09-30T04:05:00Z");
+        let stale = crate::parse_ts_timestamp("2026-09-30T03:00:00Z");
+        let cases = [
+            (weekly(99.0, 1_000), Some((stale, weekly(49.0, 1_000)))),
+            (weekly(52.0, 1_000), Some((fresh, weekly(49.0, 1_000)))),
+            (weekly(99.0, 1_000), Some((fresh, weekly(49.0, 700_000)))),
+            (weekly(99.0, 1_000), Some((None, weekly(49.0, 1_000)))),
+            (weekly(99.0, 1_000), None),
+        ];
+        for (live, logged) in cases {
+            let expected = weekly_used(&live);
+            assert_eq!(weekly_used(&prefer_fresh_logs(live, logged, now)), expected);
+        }
     }
 
     #[test]
