@@ -25,13 +25,13 @@ fi
 collector="$PWD/.build/AgentBurnQuotaCollector"
 if [[ "$release" == 1 ]]; then
   swiftc -O -target arm64-apple-macosx14.0 -o "$collector-arm64" \
-    Sources/AgentBurn/{CLIClient,QuotaCollector,QuotaHistory}.swift Tools/QuotaTypes.swift Tools/QuotaCollectorMain.swift
+    Sources/AgentBurn/{CLIClient,QuotaCollector,QuotaHistory,QuotaJournal}.swift Tools/QuotaTypes.swift Tools/QuotaCollectorMain.swift
   swiftc -O -target x86_64-apple-macosx14.0 -o "$collector-x86_64" \
-    Sources/AgentBurn/{CLIClient,QuotaCollector,QuotaHistory}.swift Tools/QuotaTypes.swift Tools/QuotaCollectorMain.swift
+    Sources/AgentBurn/{CLIClient,QuotaCollector,QuotaHistory,QuotaJournal}.swift Tools/QuotaTypes.swift Tools/QuotaCollectorMain.swift
   lipo -create "$collector-arm64" "$collector-x86_64" -output "$collector"
 else
   swiftc -O -o "$collector" \
-    Sources/AgentBurn/{CLIClient,QuotaCollector,QuotaHistory}.swift Tools/QuotaTypes.swift Tools/QuotaCollectorMain.swift
+    Sources/AgentBurn/{CLIClient,QuotaCollector,QuotaHistory,QuotaJournal}.swift Tools/QuotaTypes.swift Tools/QuotaCollectorMain.swift
 fi
 # Assemble in a new directory so obsolete frameworks cannot survive a rebuild.
 staging="$(mktemp -d "$PWD/dist-staging.XXXXXX")"

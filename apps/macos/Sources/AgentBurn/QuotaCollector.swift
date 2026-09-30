@@ -50,7 +50,8 @@ enum QuotaCollector {
     guard flock(descriptor, LOCK_EX | LOCK_NB) == 0 else { return }
     defer { flock(descriptor, LOCK_UN) }
     let file = QuotaHistoryFile(directory: directory)
-    var history = try file.load() ?? QuotaHistory()
+    _ = try file.load()
+    var saveError: Error?
     await withTaskGroup(of: (String, [QuotaReading], String?).self) { group in
       for agent in ["codex", "claude"] {
         group.addTask {
@@ -107,18 +108,15 @@ enum QuotaCollector {
         }
       }
       for await (agent, readings, error) in group {
-        for reading in readings { history.record(reading, source: config.source) }
-        if let error {
-          history.fail(agent: agent, source: config.source, message: error)
-        } else if readings.isEmpty {
-          history.failures[config.source]?[agent] = nil
-        }
+        let failures: [String: String?] =
+          error != nil || readings.isEmpty ? [agent: error] : [:]
         // Persist each provider immediately, even if the other hangs or this process crashes.
-        do { try file.save(history) } catch {
+        do { try file.commit(readings, source: config.source, failures: failures) } catch {
+          saveError = error
           FileHandle.standardError.write(Data("Quota history could not be saved.\n".utf8))
         }
       }
     }
-    try file.save(history)
+    if let saveError { throw saveError }
   }
 }

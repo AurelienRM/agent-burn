@@ -45,6 +45,51 @@ private func reading(
   #expect(try file.load()?.latest(agent: "codex", source: "test")?.window.usedPercent == 14)
 }
 
+@Test func quotaCommitsMergeConcurrentWritersAndJournalEveryReading() throws {
+  let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+  defer { try? FileManager.default.removeItem(at: directory) }
+  let file = QuotaHistoryFile(directory: directory)
+  let source = "|/a,/b"
+  let start = Date(timeIntervalSince1970: 1_800_000_000)
+  var existing = QuotaHistory()
+  existing.record(reading(10, elapsed: 5, date: start, agent: "claude"), source: source)
+  try file.save(existing)
+  // A stale in-memory copy from another writer must not erase the collector's row.
+  try file.commit(
+    [reading(20, elapsed: 6, date: start.addingTimeInterval(60), agent: "claude")], source: source)
+  try file.commit(
+    [reading(30, elapsed: 7, date: start.addingTimeInterval(60), agent: "claude-session")],
+    source: source)
+  let merged = try #require(try file.load())
+  #expect(merged.samples(agent: "claude", source: source).map(\.remaining) == [90, 80])
+  #expect(merged.latest(agent: "claude-session", source: source)?.window.usedPercent == 30)
+
+  let csv = try String(contentsOf: file.journal.url, encoding: .utf8)
+  #expect(csv.split(separator: "\n").count == 4)
+  #expect(csv.hasPrefix(QuotaJournal.header.joined(separator: ",")))
+  #expect(csv.contains("\"|/a,/b\",claude,10080,20,80,6"))
+
+  try FileManager.default.removeItem(at: file.url)
+  try Data("broken".utf8).write(to: file.url.appendingPathExtension("bak"))
+  let rebuilt = try #require(try file.load())
+  #expect(rebuilt.samples(agent: "claude", source: source).map(\.remaining) == [90, 80])
+  #expect(
+    rebuilt.latest(agent: "claude-session", source: source)?.date == start.addingTimeInterval(60))
+}
+
+@Test func claudeSessionReadingUsesProviderObservationTime() throws {
+  let observed = Date(timeIntervalSince1970: 1_800_000_000)
+  let account = ClaudeAccount(
+    sessionUsedPercent: 40,
+    sessionResetsAtMs: observed.addingTimeInterval(3 * 3600)
+      .timeIntervalSince1970 * 1000,
+    observedAtMs: observed.timeIntervalSince1970 * 1000)
+  let session = try #require(
+    claudeSessionReading(account, now: observed.addingTimeInterval(600)))
+  #expect(session.date == observed)
+  #expect(abs(session.window.elapsedPercent - 40) < 0.001)
+}
+
 @Test func quotaHistoryRejectsInvalidAndDuplicateMeasurements() {
   var history = QuotaHistory()
   let sample = reading()

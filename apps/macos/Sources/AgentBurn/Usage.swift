@@ -886,10 +886,11 @@ func cursorMeterForecast(account: CursorAccount?, now: Date, stored: Forecast?) 
   return Forecast(window: reading.window, observedAt: reading.date, isLive: true)
 }
 
-func claudeSessionReading(_ account: ClaudeAccount, now: Date = .now) -> QuotaReading? {
+func claudeSessionReading(_ account: ClaudeAccount, now current: Date = .now) -> QuotaReading? {
   guard let used = account.sessionUsedPercent, used.isFinite, (0...100).contains(used),
     let resetMs = account.sessionResetsAtMs
   else { return nil }
+  let now = account.observedAtMs.map { Date(timeIntervalSince1970: $0 / 1000) } ?? current
   let duration: TimeInterval = 5 * 3600
   let reset = Date(timeIntervalSince1970: resetMs / 1000)
   let elapsed = (duration - reset.timeIntervalSince(now)) / duration * 100

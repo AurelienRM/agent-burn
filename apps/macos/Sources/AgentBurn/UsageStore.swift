@@ -473,9 +473,9 @@ final class UsageStore {
       report.claudeAccount.flatMap { claudeSessionReading($0) },
     ].compactMap { $0 }
     guard !readings.isEmpty else { return }
-    for reading in readings { quotaHistory.record(reading, source: quotaSourceKey) }
     do {
-      try QuotaHistoryFile(directory: cacheURL.deletingLastPathComponent()).save(quotaHistory)
+      quotaHistory = try QuotaHistoryFile(directory: cacheURL.deletingLastPathComponent())
+        .commit(readings, source: quotaSourceKey)
       errors["quotaHistory"] = nil
     } catch {
       errors["quotaHistory"] =

@@ -10,12 +10,14 @@ struct ClaudeAccount: Codable, Sendable {
   let extraUsedUSD: Double?
   let extraLimitUSD: Double?
   let extraUsedPercent: Double?
+  /// When Anthropic reported these meters; the CLI may serve a shared cached reading.
+  let observedAtMs: Double?
 
   init(
     sessionUsedPercent: Double? = nil, sessionResetsAtMs: Double? = nil,
     weeklyUsedPercent: Double? = nil, weeklyResetsAtMs: Double? = nil,
     scoped: [ClaudeScopedLimit] = [], extraEnabled: Bool? = nil, extraUsedUSD: Double? = nil,
-    extraLimitUSD: Double? = nil, extraUsedPercent: Double? = nil
+    extraLimitUSD: Double? = nil, extraUsedPercent: Double? = nil, observedAtMs: Double? = nil
   ) {
     self.sessionUsedPercent = sessionUsedPercent
     self.sessionResetsAtMs = sessionResetsAtMs
@@ -26,6 +28,7 @@ struct ClaudeAccount: Codable, Sendable {
     self.extraUsedUSD = extraUsedUSD
     self.extraLimitUSD = extraLimitUSD
     self.extraUsedPercent = extraUsedPercent
+    self.observedAtMs = observedAtMs
   }
 
   init(from decoder: Decoder) throws {
@@ -39,6 +42,7 @@ struct ClaudeAccount: Codable, Sendable {
     extraUsedUSD = try container.decodeIfPresent(Double.self, forKey: .extraUsedUSD)
     extraLimitUSD = try container.decodeIfPresent(Double.self, forKey: .extraLimitUSD)
     extraUsedPercent = try container.decodeIfPresent(Double.self, forKey: .extraUsedPercent)
+    observedAtMs = try container.decodeIfPresent(Double.self, forKey: .observedAtMs)
   }
 }
 

@@ -24,12 +24,14 @@ struct QuotaHistory: Codable {
   var readings: [String: [String: [QuotaReading]]] = [:]
   var failures: [String: [String: String]] = [:]
 
-  mutating func record(_ reading: QuotaReading, source: String) {
+  @discardableResult
+  mutating func record(_ reading: QuotaReading, source: String) -> Bool {
     guard reading.observedAt.isFinite, reading.window.isValid,
       reading.observedAt > (latest(agent: reading.agent, source: source)?.observedAt ?? 0)
-    else { return }
+    else { return false }
     readings[source, default: [:]][reading.agent, default: []].append(reading)
     failures[source]?[reading.agent] = nil
+    return true
   }
 
   mutating func fail(agent: String, source: String, message: String) {
@@ -97,15 +99,39 @@ struct QuotaHistoryFile {
     return history
   }
 
+  var journal: QuotaJournal { QuotaJournal(directory: directory) }
+
+  /// Archive, then its backup, then a rebuild from the append-only CSV journal.
   func load() throws -> QuotaHistory? {
-    guard FileManager.default.fileExists(atPath: url.path) else {
-      return FileManager.default.fileExists(atPath: backup.path)
-        ? try decode(Data(contentsOf: backup)) : nil
+    var failure: Error?
+    for candidate in [url, backup] where FileManager.default.fileExists(atPath: candidate.path) {
+      do { return try decode(Data(contentsOf: candidate)) } catch { failure = failure ?? error }
     }
-    do { return try decode(Data(contentsOf: url)) } catch {
-      guard FileManager.default.fileExists(atPath: backup.path) else { throw error }
-      return try decode(Data(contentsOf: backup))
+    if let rebuilt = try? journal.load() { return rebuilt }
+    if let failure { throw failure }
+    return nil
+  }
+
+  /// Merges readings into the latest archive on disk so concurrent writers
+  /// (the app and the background collector) never drop each other's rows.
+  @discardableResult
+  func commit(
+    _ readings: [QuotaReading], source: String,
+    failures: [String: String?] = [:]
+  ) throws -> QuotaHistory {
+    var history = (try? load()) ?? QuotaHistory()
+    try? journal.seedIfMissing(from: history)
+    let accepted = readings.filter { history.record($0, source: source) }
+    for (agent, message) in failures {
+      if let message {
+        history.fail(agent: agent, source: source, message: message)
+      } else {
+        history.failures[source]?[agent] = nil
+      }
     }
+    try? journal.append(accepted.map { (source, $0) })
+    try save(history)
+    return history
   }
 
   func save(_ history: QuotaHistory) throws {
