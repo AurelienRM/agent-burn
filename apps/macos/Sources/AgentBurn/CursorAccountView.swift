@@ -40,7 +40,14 @@ struct CursorAccountView: View {
         CardHeader(
           title: "Cursor " + (plan?.plan ?? "account"), symbol: "creditcard.fill", tint: .purple
         ) {
-          if let price = plan?.pricePerMonth { Text(currency(price) + " / month") }
+          HStack(spacing: 12) {
+            if let price = plan?.pricePerMonth {
+              Text(currency(price) + " / month").monospacedDigit()
+            }
+            if promoForecast != nil, let account, cursorHasPromotionalCredits(account) {
+              QuotaChartRangePicker(range: $range)
+            }
+          }
         }
         if let account {
           if let forecast = promoForecast, cursorHasPromotionalCredits(account) {
@@ -65,7 +72,7 @@ struct CursorAccountView: View {
   }
 
   @ViewBuilder private func promoMeter(_ forecast: Forecast, account: CursorAccount) -> some View {
-    HStack(alignment: .top, spacing: 28) {
+    HStack(alignment: .top, spacing: 24) {
       QuotaSummary(
         forecast: forecast,
         samples: store.samples(for: "cursor", range: range, now: store.quotaCheckDate),
@@ -78,17 +85,14 @@ struct CursorAccountView: View {
         style: .promotionalCredits
       )
       .frame(width: 236, alignment: .leading)
-      VStack(alignment: .trailing, spacing: 8) {
-        QuotaChartRangePicker(range: $range)
-        QuotaChart(
-          forecast: forecast,
-          samples: store.samples(for: "cursor", range: range, now: store.quotaCheckDate),
-          color: BurnTheme.color(for: "cursor"),
-          range: range, now: store.quotaCheckDate,
-          resetLabel: QuotaMeterStyle.promotionalCredits.chartResetLabel
-        )
-        .id(range)
-      }
+      QuotaChart(
+        forecast: forecast,
+        samples: store.samples(for: "cursor", range: range, now: store.quotaCheckDate),
+        color: BurnTheme.color(for: "cursor"),
+        range: range, now: store.quotaCheckDate,
+        resetLabel: QuotaMeterStyle.promotionalCredits.chartResetLabel
+      )
+      .id(range)
     }
     HStack(alignment: .firstTextBaseline) {
       VStack(alignment: .leading, spacing: 4) {

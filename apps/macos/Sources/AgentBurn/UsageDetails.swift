@@ -36,7 +36,7 @@ struct QuotaSummary: View {
   }
 
   var body: some View {
-    VStack(alignment: .leading, spacing: compact ? 14 : 20) {
+    VStack(alignment: .leading, spacing: 14) {
       if !compact { title }
       if compact { compactHero } else { hero }
       if !compact { facts }
@@ -46,13 +46,13 @@ struct QuotaSummary: View {
 
   private var title: some View {
     HStack(spacing: 6) {
-      Text(style.title).font(.headline).lineLimit(1)
+      Text(style.title).font(.system(size: 13, weight: .semibold)).lineLimit(1)
       if stale { staleMark }
     }
   }
 
   private var hero: some View {
-    VStack(alignment: .leading, spacing: 10) {
+    VStack(alignment: .leading, spacing: 9) {
       remainingLabel
       if let paceText {
         StatusBadge(text: paceText, color: paceColor)
@@ -107,16 +107,18 @@ struct QuotaSummary: View {
           if stale { staleMark }
         }
       }
-      Text(quotaChartPercentLabel(forecast.remaining))
-        .font(.system(size: compact ? 44 : 42, weight: .semibold, design: .rounded))
-        .monospacedDigit()
-        .contentTransition(.numericText())
-        .animation(.snappy, value: forecast.remaining)
-        .foregroundStyle(BurnTheme.ink)
-        .lineLimit(1)
-        .minimumScaleFactor(0.7)
-      if !compact {
-        Text("remaining").font(.system(size: 13)).foregroundStyle(muted)
+      HStack(alignment: .firstTextBaseline, spacing: 6) {
+        Text(quotaChartPercentLabel(forecast.remaining))
+          .font(.system(size: compact ? 44 : 38, weight: .semibold, design: .rounded))
+          .monospacedDigit()
+          .contentTransition(.numericText())
+          .animation(.snappy, value: forecast.remaining)
+          .foregroundStyle(BurnTheme.ink)
+          .lineLimit(1)
+          .minimumScaleFactor(0.7)
+        if !compact {
+          Text("remaining").font(.system(size: 13)).foregroundStyle(muted).fixedSize()
+        }
       }
     }
     .help(
@@ -134,12 +136,19 @@ struct QuotaSummary: View {
       .accessibilityLabel("Last known quota; update pending")
   }
 
+  /// Weekday reads faster than a date inside one window; beyond six days it would be ambiguous.
+  private var resetDetail: String {
+    forecast.reset.timeIntervalSince(now) < 6 * 86_400
+      ? forecast.reset.formatted(.dateTime.weekday(.abbreviated).hour().minute())
+      : quotaDayLabel(forecast.reset)
+  }
+
   private var facts: some View {
-    VStack(spacing: 11) {
+    VStack(spacing: 8) {
       row(
         style.resetTitle, quotaTimeLeft(forecast, now: now),
-        detail: quotaDateCompact(forecast.reset),
-        help: style.resetHelp)
+        detail: resetDetail,
+        help: "\(style.resetHelp) \(quotaDateText(forecast.reset)).")
       row(
         "Used",
         "\(quotaUsedPercent(forecast).formatted(.number.precision(.fractionLength(1))))%",
@@ -169,34 +178,34 @@ struct QuotaSummary: View {
           help: "Codex rate-limit resets you can redeem now.")
       }
     }
+    .padding(.horizontal, 10).padding(.vertical, 9)
+    .background(BurnTheme.hover, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
   }
 
   private var remainingBar: some View {
-    ShareBar(value: forecast.remaining / 100, tint: paceColor, height: 6)
+    ShareBar(value: forecast.remaining / 100, tint: paceColor, height: 5)
   }
 
   private func row(_ title: String, _ value: String, detail: String? = nil, help: String)
     -> some View
   {
-    HStack(alignment: .firstTextBaseline, spacing: 12) {
-      Text(title).foregroundStyle(muted).lineLimit(1)
-      Spacer(minLength: 8)
-      VStack(alignment: .trailing, spacing: 1) {
-        Text(value)
-          .font(.system(size: 13, weight: .semibold, design: .rounded))
+    HStack(alignment: .firstTextBaseline, spacing: 6) {
+      Text(title).foregroundStyle(muted).lineLimit(1).fixedSize()
+      Spacer(minLength: 6)
+      Text(value)
+        .font(.system(size: 12, weight: .semibold, design: .rounded))
+        .monospacedDigit()
+        .lineLimit(1)
+        .fixedSize()
+      if let detail {
+        Text(detail)
+          .font(.system(size: 11))
+          .foregroundStyle(muted)
           .monospacedDigit()
           .lineLimit(1)
-        if let detail {
-          Text(detail)
-            .foregroundStyle(muted)
-            .monospacedDigit()
-            .lineLimit(1)
-            .minimumScaleFactor(0.82)
-            .allowsTightening(true)
-        }
+          .minimumScaleFactor(0.8)
+          .allowsTightening(true)
       }
-      .multilineTextAlignment(.trailing)
-      .layoutPriority(1)
     }
     .font(.system(size: 12))
     .help(help)
@@ -472,7 +481,8 @@ struct SourceUsageView: View {
             color: BurnTheme.color(for: agent),
             scope: agent == "cursor" && !cursorHasPromotionalCredits(store.summary?.cursorAccount)
               ? $cursorScope : nil,
-            domain: store.chartDomain)
+            domain: store.chartDomain
+          )
           .burnCard(padding: 14, radius: 12)
         }
         if let models = usage.models, !models.isEmpty {
@@ -537,13 +547,15 @@ struct PeriodPicker: View {
 
 struct QuotaChartRangePicker: View {
   @Binding var range: QuotaChartRange
+  var width: CGFloat = 132
   var body: some View {
     Picker("Quota chart range", selection: $range) {
       ForEach(QuotaChartRange.allCases) { range in Text(range.label).tag(range) }
     }
     .labelsHidden()
     .pickerStyle(.menu)
-    .frame(width: 160)
+    .controlSize(.small)
+    .frame(width: width)
     .help("Changes only the weekly quota chart. Spend period stays independent.")
     .accessibilityLabel("Quota chart range")
   }

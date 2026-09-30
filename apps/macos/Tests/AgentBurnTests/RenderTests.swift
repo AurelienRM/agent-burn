@@ -157,3 +157,69 @@ import Testing
       .frame(width: 320, height: 320, alignment: .top).background(BurnTheme.background),
     size: NSSize(width: 320, height: 320), to: output.appendingPathComponent("quota-empty.png"))
 }
+
+// Deterministic Claude Split Deck fixtures: an on-track and an at-risk account.
+@Test(.enabled(if: ProcessInfo.processInfo.environment["AGENT_BURN_CLAUDE_RENDER_DIR"] != nil))
+@MainActor func renderClaudeSplitDeck() throws {
+  let output = URL(
+    fileURLWithPath: try #require(
+      ProcessInfo.processInfo.environment["AGENT_BURN_CLAUDE_RENDER_DIR"]))
+  try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+  let states:
+    [(
+      name: String, session: (elapsed: Double, used: Double),
+      weekly: (elapsed: Double, used: Double)
+    )] = [
+      ("on-track", (20, 10), (24.6, 3)),
+      ("at-risk", (20, 38), (25, 34)),
+    ]
+  for state in states {
+    let suite = "AgentBurn.claude.\(UUID().uuidString)"
+    let defaults = try #require(UserDefaults(suiteName: suite))
+    defaults.set("/usr/bin/false", forKey: "cliPath")
+    defer { defaults.removePersistentDomain(forName: suite) }
+    let storage = output.appendingPathComponent(UUID().uuidString)
+    let store = UsageStore(defaults: defaults, storageDirectory: storage)
+    let now = Date.now.addingTimeInterval(-30)
+    let source = store.customPath + "|" + store.codexHomes
+    var history = QuotaHistory()
+    for (agent, minutes, target) in [
+      (claudeSessionQuotaAgent, 300.0, state.session), ("claude", 10080.0, state.weekly),
+    ] {
+      let elapsed = minutes * target.elapsed / 100
+      let steps = 60
+      for step in 0...steps {
+        let fraction = Double(step) / Double(steps)
+        // Weekly usage starts late in the cycle; session usage climbs steadily.
+        let usage = agent == "claude" ? max(0, fraction - 0.9) / 0.1 : fraction
+        history.record(
+          QuotaReading(
+            agent: agent,
+            observedAt: now.addingTimeInterval(-elapsed * 60 * (1 - fraction))
+              .timeIntervalSince1970 * 1000,
+            window: QuotaWindow(
+              windowMinutes: minutes, usedPercent: target.used * usage,
+              elapsedPercent: target.elapsed * fraction, apiEquivalentSpent: 0)),
+          source: source)
+      }
+    }
+    try QuotaHistoryFile(directory: storage).save(history)
+    store.reloadQuotas()
+    store.quotaCheckDate = now.addingTimeInterval(30)
+    let account = ClaudeAccount(
+      sessionUsedPercent: state.session.used, weeklyUsedPercent: state.weekly.used,
+      scoped: [ClaudeScopedLimit(name: "Fable", usedPercent: 0, resetsAtMs: nil)],
+      extraEnabled: false)
+    let plan = SubscriptionAgent(
+      agent: "claude", plan: "Max 20x", pricePerMonth: 200, periodUsage: 0, liveLimits: true,
+      shortWindow: nil)
+    for (name, appearance) in [("dark", NSAppearance.Name.darkAqua), ("light", .aqua)] {
+      NSApplication.shared.appearance = NSAppearance(named: appearance)
+      try render(
+        ClaudeAccountView(account: account, plan: plan).environment(store).padding(24)
+          .frame(width: 920, height: 540, alignment: .top).background(BurnTheme.background),
+        size: NSSize(width: 920, height: 540),
+        to: output.appendingPathComponent("claude-\(state.name)-\(name).png"))
+    }
+  }
+}

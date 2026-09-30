@@ -22,54 +22,22 @@ struct NativeUsageView: View {
   private var tokenCount: UInt64 {
     agent == nil ? store.summary?.totals.totalTokens ?? 0 : own?.totalTokens ?? 0
   }
+  private var planInAccountHeader: Bool {
+    switch agent {
+    case "claude", "cursor": true
+    case "codex": store.forecast(for: "codex") != nil
+    default: false
+    }
+  }
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 20) {
-      HStack(alignment: .center, spacing: 12) {
-        if let agent {
-          HarnessIcon(agent: agent, size: 42)
-        } else {
-          IconBadge(symbol: "flame.fill", size: 42)
-        }
-        VStack(alignment: .leading, spacing: 3) {
-          Text(agent.map(harnessName) ?? "All harnesses")
-            .font(.system(size: 24, weight: .bold, design: .rounded))
-          Text("\(store.period.label) · usage from your logs and connected providers")
-            .font(.system(size: 12)).foregroundStyle(.secondary)
-        }
-        Spacer()
-        PeriodPicker()
-      }
+    VStack(alignment: .leading, spacing: 14) {
       if store.summary == nil, let error = store.errors["summary"] {
         ReportNotice(message: error)
       }
       if store.summary != nil {
         meters
-
-        HStack(spacing: 14) {
-          MetricTile(
-            title: "Total spend", value: currency(cost), detail: "API-equivalent value",
-            symbol: "dollarsign"
-          )
-          .burnCard()
-          MetricTile(
-            title: "Tokens", value: tokens(tokenCount), detail: "Input, output and cache",
-            symbol: "square.stack.3d.up.fill", tint: .blue
-          )
-          .burnCard()
-          MetricTile(
-            title: "Avg tokens / $",
-            value: quotaTokensPerUnitLabel(
-              quotaTokensPerDollar(tokens: tokenCount, cost: cost), unit: "$") ?? "—",
-            detail: store.period.label, symbol: "gauge.with.dots.needle.50percent", tint: .green
-          )
-          .burnCard()
-          MetricTile(
-            title: "Models", value: store.hasPeriodDetails ? models.count.formatted() : "—",
-            detail: agent.map(harnessName) ?? "Across all harnesses", symbol: "cpu", tint: .purple
-          )
-          .burnCard()
-        }
+        statStrip
         HStack(alignment: .top, spacing: 14) {
           ActivityChart(
             days: days, color: agent.map(BurnTheme.color) ?? BurnTheme.flame,
@@ -80,7 +48,7 @@ struct NativeUsageView: View {
           .frame(maxHeight: .infinity, alignment: .top)
           .burnCard()
           .frame(maxWidth: .infinity)
-          if agent == nil { harnessList.frame(width: 300) }
+          if agent == nil { harnessList.frame(width: 280) }
         }
         .fixedSize(horizontal: false, vertical: true)
         if store.hasPeriodDetails { modelSection }
@@ -121,9 +89,11 @@ struct NativeUsageView: View {
           }
           .burnCard()
         }
-        if let subscriptions = store.summary?.subscription?.agents.filter({
-          agent == nil || $0.agent == agent
-        }), !subscriptions.isEmpty {
+        if !planInAccountHeader,
+          let subscriptions = store.summary?.subscription?.agents.filter({
+            agent == nil || $0.agent == agent
+          }), !subscriptions.isEmpty
+        {
           VStack(alignment: .leading, spacing: 12) {
             CardHeader(title: "Subscriptions", symbol: "creditcard.fill", tint: .purple) {
               Text("Monthly plan prices")
@@ -173,6 +143,34 @@ struct NativeUsageView: View {
         .frame(maxWidth: .infinity, minHeight: 380)
       }
     }
+  }
+
+  private var statStrip: some View {
+    HStack(alignment: .top, spacing: 16) {
+      MetricTile(
+        title: "Total spend", value: currency(cost), detail: "API-equivalent value",
+        symbol: "dollarsign"
+      )
+      Divider()
+      MetricTile(
+        title: "Tokens", value: tokens(tokenCount), detail: "Input, output and cache",
+        symbol: "square.stack.3d.up.fill", tint: .blue
+      )
+      Divider()
+      MetricTile(
+        title: "Avg tokens / $",
+        value: quotaTokensPerUnitLabel(
+          quotaTokensPerDollar(tokens: tokenCount, cost: cost), unit: "$") ?? "—",
+        detail: store.period.label, symbol: "gauge.with.dots.needle.50percent", tint: .green
+      )
+      Divider()
+      MetricTile(
+        title: "Models", value: store.hasPeriodDetails ? models.count.formatted() : "—",
+        detail: agent.map(harnessName) ?? "Across all harnesses", symbol: "cpu", tint: .purple
+      )
+    }
+    .fixedSize(horizontal: false, vertical: true)
+    .burnCard(padding: 16)
   }
 
   private func tokenBreakdown(_ breakdown: [String: UInt64]) -> some View {
@@ -312,7 +310,7 @@ struct NativeUsageView: View {
           total: agent == "cursor" && !hasCursorCredits && cursorScope == .cursorModels
             ? models.reduce(0) { $0 + $1.totalCost } : cost
         )
-        .frame(height: CGFloat(min(9, max(3, models.count))) * 27 + 28)
+        .frame(height: CGFloat(min(9, max(3, models.count))) * 24 + 36)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
       }
     }
@@ -327,8 +325,21 @@ struct NativeUsageView: View {
     if let error = store.errors[agent] { ReportNotice(message: error) }
     if let error = store.errors["quotaService"] { ReportNotice(message: error) }
     if let forecast = store.forecast(for: agent) {
-      Group {
-        HStack(alignment: .top, spacing: 28) {
+      let plan = store.summary?.subscription?.agents.first { $0.agent == agent }
+      VStack(alignment: .leading, spacing: 16) {
+        CardHeader(
+          title: harnessName(agent) + " " + (plan?.plan ?? "account"),
+          symbol: "gauge.with.dots.needle.33percent", tint: BurnTheme.color(for: agent)
+        ) {
+          HStack(spacing: 12) {
+            if let price = plan?.pricePerMonth {
+              Text(currency(price) + " / month").monospacedDigit()
+            }
+            QuotaChartRangePicker(
+              range: agent == "cursor" ? $store.cursorQuotaChartRange : $store.quotaChartRange)
+          }
+        }
+        HStack(alignment: .top, spacing: 24) {
           QuotaSummary(
             forecast: forecast,
             samples: store.samples(
@@ -344,20 +355,15 @@ struct NativeUsageView: View {
             style: style
           )
           .frame(width: 236, alignment: .leading)
-          VStack(alignment: .trailing, spacing: 8) {
-            QuotaChartRangePicker(
-              range: agent == "cursor"
-                ? $store.cursorQuotaChartRange : $store.quotaChartRange)
-            QuotaChart(
-              forecast: forecast,
-              samples: store.samples(
-                for: agent, range: range, now: store.quotaCheckDate),
-              color: BurnTheme.color(for: agent),
-              range: range, now: store.quotaCheckDate,
-              resetLabel: style.chartResetLabel
-            )
-            .id(range)
-          }
+          QuotaChart(
+            forecast: forecast,
+            samples: store.samples(
+              for: agent, range: range, now: store.quotaCheckDate),
+            color: BurnTheme.color(for: agent),
+            range: range, now: store.quotaCheckDate,
+            resetLabel: style.chartResetLabel
+          )
+          .id(range)
         }
       }
       .burnCard(padding: 18)

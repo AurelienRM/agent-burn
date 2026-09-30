@@ -178,6 +178,9 @@ struct DashboardView: View {
       ToolbarItem(placement: .navigation) {
         QuotaSourceMenu()
       }
+      ToolbarItem(placement: .primaryAction) {
+        PeriodPicker(width: 130).help("Spend period")
+      }
       ToolbarItemGroup(placement: .primaryAction) {
         Button {
           Task { await store.refreshAll() }

@@ -53,179 +53,335 @@ struct ClaudeScopedLimit: Codable, Sendable, Identifiable {
   var id: String { name }
 }
 
-/// One card for every Claude meter: the weekly quota chart, a smaller 5-hour
-/// session chart, then slim rows for model-scoped limits and extra usage.
+/// Split Deck: a one-line verdict, then the 5-hour session and weekly limits side by
+/// side with their until-reset charts, then slim rows for model-scoped limits and extra usage.
 struct ClaudeAccountView: View {
   @Environment(UsageStore.self) private var store
   let account: ClaudeAccount?
   let plan: SubscriptionAgent?
   private var now: Date { store.quotaCheckDate }
   private var tint: Color { BurnTheme.color(for: "claude") }
+  private var weekly: Forecast? { store.forecast(for: "claude") }
+  private var session: Forecast? {
+    store.forecast(for: claudeSessionQuotaAgent).flatMap { $0.reset > now ? $0 : nil }
+  }
 
   var body: some View {
-    GroupBox {
-      VStack(alignment: .leading, spacing: 16) {
-        HStack {
-          Label(
-            "Claude " + (plan?.plan ?? "account"), systemImage: "gauge.with.dots.needle.33percent"
-          )
-          .font(.headline)
-          Spacer()
+    VStack(alignment: .leading, spacing: 16) {
+      CardHeader(
+        title: "Claude " + (plan?.plan ?? "account"), symbol: "gauge.with.dots.needle.33percent",
+        tint: tint
+      ) {
+        HStack(spacing: 12) {
           if let price = plan?.pricePerMonth {
-            Text(currency(price) + " / month").foregroundStyle(.secondary)
+            Text(currency(price) + " / month").monospacedDigit()
           }
+          if let latest = weekly ?? session { freshness(latest) }
         }
-        weekly
+      }
+      if let verdict = claudeVerdict(session: session, weekly: weekly, now: now) {
+        ClaudeVerdictBanner(verdict: verdict)
+      }
+      if account != nil || weekly != nil || session != nil {
+        HStack(alignment: .top, spacing: 14) {
+          ClaudeLimitPanel(
+            title: "5-hour session", forecast: session,
+            samples: store.samples(for: claudeSessionQuotaAgent, range: .rte, now: now),
+            now: now, tint: tint, used: account?.sessionUsedPercent,
+            resetsAt: claudeDate(account?.sessionResetsAtMs))
+          ClaudeLimitPanel(
+            title: "Weekly", forecast: weekly,
+            samples: store.samples(for: "claude", range: .rte, now: now),
+            now: now, tint: tint, used: account?.weeklyUsedPercent,
+            resetsAt: claudeDate(account?.weeklyResetsAtMs))
+        }
+      }
+      if let account, !account.scoped.isEmpty || showsExtra(account) {
         Divider()
-        session
-        if let account, !account.scoped.isEmpty || showsExtra(account) {
-          Divider()
-          VStack(spacing: 12) {
-            ForEach(account.scoped) { window in
-              ClaudeMeterRow(
-                title: window.name + " weekly", used: window.usedPercent,
-                detail: "Resets " + claudeDate(window.resetsAtMs))
-            }
-            if showsExtra(account) {
-              ClaudeMeterRow(
-                title: "Extra usage", used: extraUsedPercent(account),
-                value: account.extraUsedUSD.map { extraRemaining(account, used: $0) },
-                detail: account.extraLimitUSD.map { "of " + currency($0) + " limit" }
-                  ?? "Enabled this cycle")
-            }
-          }
-        }
-        if account == nil {
-          Text(
-            "Live account limits are unavailable. Refresh with live data enabled to load Claude’s meters."
-          )
-          .font(.caption).foregroundStyle(.secondary)
-        }
-      }.padding(12)
+        secondaryMeters(account)
+      }
+      if account == nil {
+        Text(
+          "Live account limits are unavailable. Refresh with live data enabled to load Claude’s meters."
+        )
+        .font(.caption).foregroundStyle(.secondary)
+      }
     }
+    .burnCard(padding: 18)
   }
 
-  @ViewBuilder private var weekly: some View {
-    @Bindable var store = store
-    if let forecast = store.forecast(for: "claude") {
-      let range = store.quotaChartRange
-      let samples = store.samples(for: "claude", range: range, now: now)
-      HStack(alignment: .top, spacing: 28) {
-        QuotaSummary(
-          forecast: forecast, samples: samples, now: now,
-          stale: !forecast.isFresh(at: now) || store.quotaError(for: "claude") != nil,
-          staleHelp: store.quotaError(for: "claude")
-            ?? "Showing the last known reading. Update pending.",
-          rates: store.blendRates(for: "claude")
-        )
-        .frame(width: 236, alignment: .leading)
-        VStack(alignment: .trailing, spacing: 8) {
-          QuotaChartRangePicker(range: $store.quotaChartRange)
-          QuotaChart(forecast: forecast, samples: samples, color: tint, range: range, now: now)
-            .id(range)
-        }
-      }
-    } else {
-      ClaudeMeterRow(
-        title: "Weekly", used: account?.weeklyUsedPercent,
-        detail: "Resets " + claudeDate(account?.weeklyResetsAtMs))
+  private func freshness(_ forecast: Forecast) -> some View {
+    let fresh = forecast.isFresh(at: now) && store.quotaError(for: "claude") == nil
+    return HStack(spacing: 6) {
+      Circle().fill(fresh ? BurnTheme.ahead : .orange).frame(width: 7, height: 7)
+      Text(forecast.observedAt.formatted(date: .omitted, time: .shortened)).monospacedDigit()
     }
+    .help(
+      fresh
+        ? "Live reading · updates every minute"
+        : store.quotaError(for: "claude") ?? "Showing the last known reading. Update pending."
+    )
   }
 
-  @ViewBuilder private var session: some View {
-    if let forecast = store.forecast(for: claudeSessionQuotaAgent), forecast.reset > now {
-      let samples = store.samples(for: claudeSessionQuotaAgent, range: .rte, now: now)
-      HStack(alignment: .top, spacing: 28) {
-        ClaudeSessionSummary(
-          forecast: forecast, samples: samples, now: now, stale: !forecast.isFresh(at: now)
-        )
-        .frame(width: 236, alignment: .leading)
-        QuotaChart(
-          forecast: forecast, samples: samples, color: tint, compact: true, range: .rte,
-          now: now, height: 120)
+  private func secondaryMeters(_ account: ClaudeAccount) -> some View {
+    let count = account.scoped.count + (showsExtra(account) ? 1 : 0)
+    return LazyVGrid(
+      columns: Array(
+        repeating: GridItem(.flexible(), spacing: 28, alignment: .top), count: min(2, count)),
+      alignment: .leading, spacing: 14
+    ) {
+      ForEach(account.scoped) { window in
+        ClaudeMeterRow(title: window.name + " · weekly", used: window.usedPercent, tint: tint)
       }
-    } else {
-      ClaudeMeterRow(
-        title: "Session · 5 hours", used: account?.sessionUsedPercent,
-        detail: "Resets " + claudeDate(account?.sessionResetsAtMs, time: true))
+      if showsExtra(account) {
+        ClaudeMeterRow(
+          title: "Extra usage", used: extraUsedPercent(account), tint: tint,
+          value: account.extraUsedUSD.map { extraRemaining(account, used: $0) },
+          detail: account.extraLimitUSD.map { "of " + currency($0) + " limit" })
+      }
     }
   }
 }
 
-/// Compact 5-hour session block: remaining, pace, reset time and a short chart.
-struct ClaudeSessionSummary: View {
-  let forecast: Forecast
+/// The single sentence that says whether both limits last until they reset.
+struct ClaudeVerdict: Equatable {
+  let atRisk: Bool
+  let headline: String
+  let detail: String
+}
+
+/// Session run-outs come first because they lock you out soonest.
+func claudeVerdict(session: Forecast?, weekly: Forecast?, now: Date) -> ClaudeVerdict? {
+  if let session, let verdict = claudeRunOutVerdict(session, name: "Session", now: now) {
+    return verdict
+  }
+  if let weekly, let verdict = claudeRunOutVerdict(weekly, name: "Weekly limit", now: now) {
+    return verdict
+  }
+  guard session != nil || weekly != nil else { return nil }
+  return ClaudeVerdict(
+    atRisk: false, headline: "On track.",
+    detail: session != nil && weekly != nil
+      ? "At this pace both limits last until they reset."
+      : "At this pace the limit lasts until it resets.")
+}
+
+private func claudeRunOutVerdict(_ forecast: Forecast, name: String, now: Date) -> ClaudeVerdict? {
+  let reset = quotaChartEdgeLabel(forecast.reset, isStart: false, forecast: forecast)
+  if forecast.remaining <= 0 {
+    return ClaudeVerdict(
+      atRisk: true, headline: "\(name) reached.", detail: "It resets \(reset).")
+  }
+  guard forecast.projectedEnd < forecast.reset else { return nil }
+  let empty = quotaChartEdgeLabel(forecast.projectedEnd, isStart: false, forecast: forecast)
+  let left = max(60, forecast.reset.timeIntervalSince(max(now, forecast.observedAt)))
+  let pace =
+    forecast.duration <= 86_400
+    ? "Slow to \(quotaRateText(forecast.remaining / (left / 3_600)))/h"
+    : "Keep under \(quotaRateText(forecast.remaining / (left / 86_400)))/day"
+  return ClaudeVerdict(
+    atRisk: true, headline: "\(name) runs out ≈ \(empty).",
+    detail: "\(pace) to last until the \(reset) reset.")
+}
+
+private func quotaRateText(_ value: Double) -> String {
+  value.formatted(.number.precision(.fractionLength(0...1))) + "%"
+}
+
+struct ClaudeVerdictBanner: View {
+  let verdict: ClaudeVerdict
+  private var tone: Color { verdict.atRisk ? BurnTheme.behind : BurnTheme.ahead }
+
+  var body: some View {
+    HStack(spacing: 10) {
+      Image(systemName: verdict.atRisk ? "exclamationmark.triangle.fill" : "checkmark.circle.fill")
+        .font(.system(size: 14)).foregroundStyle(tone)
+      (Text(verdict.headline).fontWeight(.semibold).foregroundStyle(
+        verdict.atRisk ? tone : BurnTheme.ink)
+        + Text(" " + verdict.detail).foregroundStyle(BurnTheme.muted))
+        .font(.system(size: 13)).monospacedDigit()
+        .lineLimit(2).fixedSize(horizontal: false, vertical: true)
+      Spacer(minLength: 0)
+    }
+    .padding(.horizontal, 14).padding(.vertical, 11)
+    .background(tone.opacity(0.09), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+    .accessibilityElement(children: .combine)
+  }
+}
+
+/// One limit: remaining share, pace delta, reset countdown and an until-reset chart.
+/// Without a collected reading it falls back to the account meter and a plain bar.
+struct ClaudeLimitPanel: View {
+  let title: String
+  let forecast: Forecast?
   let samples: [QuotaSample]
   let now: Date
-  var stale = false
+  let tint: Color
+  var used: Double? = nil
+  var resetsAt: Date? = nil
 
+  private var reset: Date? { forecast?.reset ?? resetsAt }
+  private var hasReset: Bool { reset.map { $0 <= now } ?? false }
+  private var remaining: Double? {
+    if let forecast { return forecast.remaining }
+    if hasReset { return 100 }
+    return used.map { max(0, min(100, 100 - $0)) }
+  }
   private var paceDelta: Double? {
-    quotaChartReading(at: forecast.observedAt, samples: samples, forecast: forecast, range: .rte)
-      .paceDelta
+    guard let forecast else { return nil }
+    return quotaChartReading(
+      at: forecast.observedAt, samples: samples, forecast: forecast, range: .rte
+    ).paceDelta
+  }
+  private var atRisk: Bool {
+    forecast.map { $0.remaining <= 0 || $0.projectedEnd < $0.reset } ?? false
   }
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 8) {
-      HStack(spacing: 6) {
-        Text("Session · 5 hours").font(.subheadline.weight(.medium))
-        if stale {
-          Image(systemName: "clock.badge.exclamationmark").foregroundStyle(.orange)
-            .help("Showing the last known reading. Update pending.")
-            .accessibilityLabel("Last known session reading; update pending")
+    VStack(alignment: .leading, spacing: 14) {
+      VStack(alignment: .leading, spacing: 10) {
+        HStack(spacing: 6) {
+          Text(title.uppercased())
+            .font(.system(size: 11, weight: .semibold)).tracking(0.6)
+            .foregroundStyle(BurnTheme.muted)
+          if let forecast, !forecast.isFresh(at: now) {
+            Image(systemName: "clock.badge.exclamationmark")
+              .font(.system(size: 11)).foregroundStyle(.orange)
+              .help("Showing the last known reading. Update pending.")
+              .accessibilityLabel("Last known reading; update pending")
+          }
+          Spacer(minLength: 8)
+          resetText
+        }
+        HStack(alignment: .center, spacing: 8) {
+          HStack(alignment: .firstTextBaseline, spacing: 6) {
+            Text(remaining.map(quotaPercentText) ?? "—")
+              .font(.system(size: 40, weight: .semibold, design: .rounded)).monospacedDigit()
+              .contentTransition(.numericText()).animation(.snappy, value: remaining)
+            Text("left").font(.system(size: 14)).foregroundStyle(BurnTheme.muted)
+          }
+          .lineLimit(1).minimumScaleFactor(0.7)
+          .accessibilityElement(children: .combine)
+          .accessibilityLabel("\(title) remaining")
+          Spacer(minLength: 8)
+          if let paceDelta { ClaudePaceBadge(delta: paceDelta) }
         }
       }
-      Text(quotaChartPercentLabel(forecast.remaining))
-        .font(.system(size: 28, weight: .semibold, design: .rounded)).monospacedDigit()
-        .contentTransition(.numericText()).animation(.snappy, value: forecast.remaining)
-        .accessibilityLabel("Session remaining")
-      if let pace = quotaChartDeltaText(paceDelta), let paceDelta {
-        StatusBadge(text: pace, color: paceDelta < -0.05 ? BurnTheme.behind : BurnTheme.ahead)
-          .help("Recorded remaining minus even pace across the 5-hour window.")
+      if let forecast {
+        QuotaChart(
+          forecast: forecast, samples: samples, color: tint, range: .rte, now: now,
+          height: 150, idleBadge: false, minimal: true)
+      } else {
+        placeholder
       }
-      Text(
-        "Resets in \(quotaTimeLeft(forecast, now: now)) · "
-          + forecast.reset.formatted(date: .omitted, time: .shortened)
-      )
-      .font(.caption).foregroundStyle(.secondary).monospacedDigit()
     }
-    .frame(maxWidth: .infinity, alignment: .leading)
+    .padding(16)
+    .frame(maxWidth: .infinity, alignment: .topLeading)
+    .background(BurnTheme.inset, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+    .overlay(
+      RoundedRectangle(cornerRadius: 12, style: .continuous)
+        .strokeBorder(atRisk ? BurnTheme.behind.opacity(0.28) : BurnTheme.cardStroke)
+    )
+  }
+
+  @ViewBuilder private var resetText: some View {
+    if let reset {
+      Group {
+        if hasReset {
+          Text("Reset")
+        } else {
+          Text("Resets in ")
+            + Text(quotaDurationLabel(reset.timeIntervalSince(now)))
+            .fontWeight(.semibold).foregroundStyle(BurnTheme.ink)
+        }
+      }
+      .font(.system(size: 12)).foregroundStyle(BurnTheme.muted).monospacedDigit()
+      .lineLimit(1).fixedSize()
+      .help("Resets " + quotaDateCompact(reset))
+    }
+  }
+
+  private var placeholder: some View {
+    VStack(alignment: .leading, spacing: 10) {
+      Spacer(minLength: 0)
+      if let remaining { ShareBar(value: remaining / 100, tint: tint, height: 6) }
+      Text(
+        hasReset
+          ? "Limit reset. A new window starts with your next request."
+          : "The chart appears after the next live reading."
+      )
+      .font(.system(size: 11)).foregroundStyle(BurnTheme.muted)
+      Spacer(minLength: 0)
+    }
+    .frame(height: 150)
   }
 }
 
-/// Fallback and secondary meters: title, reset detail, remaining value and a thin bar.
+/// "+10 pts ahead" / "−18 pts behind": remaining minus even pace, in percentage points.
+struct ClaudePaceBadge: View {
+  let delta: Double
+  private var tone: Color { delta < -0.05 ? BurnTheme.behind : BurnTheme.ahead }
+
+  var body: some View {
+    Text(claudePaceText(delta))
+      .font(.system(size: 12, weight: .semibold)).monospacedDigit()
+      .foregroundStyle(tone)
+      .padding(.horizontal, 8).padding(.vertical, 4)
+      .background(tone.opacity(0.14), in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+      .fixedSize()
+      .help("Remaining now minus an even pace until reset.")
+  }
+}
+
+func claudePaceText(_ delta: Double) -> String {
+  if abs(delta) < 0.05 { return "On pace" }
+  let magnitude = abs(delta).formatted(.number.precision(.fractionLength(0...1)))
+  return delta > 0 ? "+\(magnitude) pts ahead" : "−\(magnitude) pts behind"
+}
+
+/// Model-scoped limits and extra usage: title, optional detail, a thin bar and the value.
 struct ClaudeMeterRow: View {
   let title: String
   let used: Double?
+  var tint: Color = BurnTheme.flame
   var value: String? = nil
-  let detail: String
+  var detail: String? = nil
+
+  private var remaining: Double? { used.map { max(0, min(100, 100 - $0)) } }
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 6) {
-      HStack(alignment: .firstTextBaseline) {
-        Text(title).font(.subheadline.weight(.medium))
-        Text(detail).font(.caption).foregroundStyle(.secondary)
-        Spacer()
-        Text(value ?? remainingLabel(used) + " left")
-          .font(.subheadline.weight(.semibold)).monospacedDigit()
+    HStack(spacing: 16) {
+      Text(title).font(.system(size: 13, weight: .semibold)).lineLimit(1).fixedSize()
+      if let detail {
+        Text(detail).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
       }
-      if let used {
-        ProgressView(value: max(0, min(100, 100 - used)), total: 100).tint(.orange)
-          .accessibilityHidden(true)
+      Group {
+        if let remaining {
+          ShareBar(
+            value: remaining / 100, tint: remaining < 15 ? BurnTheme.behind : tint, height: 6)
+        } else {
+          Spacer(minLength: 0)
+        }
       }
+      .frame(minWidth: 48, maxWidth: .infinity)
+      .layoutPriority(-1)
+      Group {
+        if let value {
+          Text(value).fontWeight(.semibold).foregroundStyle(BurnTheme.ink)
+        } else {
+          Text(remaining.map(quotaPercentText) ?? "—").fontWeight(.semibold)
+            .foregroundStyle(BurnTheme.ink) + Text(" left").foregroundStyle(BurnTheme.muted)
+        }
+      }
+      .font(.system(size: 13)).monospacedDigit()
+      .lineLimit(1).fixedSize()
     }
     .accessibilityElement(children: .combine)
   }
 }
 
-func claudeDate(_ milliseconds: Double?, time: Bool = false) -> String {
-  guard let milliseconds else { return "unavailable" }
-  return Date(timeIntervalSince1970: milliseconds / 1000).formatted(
-    date: .abbreviated, time: time ? .shortened : .omitted)
-}
-
-func remainingLabel(_ used: Double?) -> String {
-  guard let used else { return "Unavailable" }
-  return max(0, min(100, 100 - used)).formatted(.number.precision(.fractionLength(1))) + "%"
+func claudeDate(_ milliseconds: Double?) -> Date? {
+  milliseconds.map { Date(timeIntervalSince1970: $0 / 1000) }
 }
 
 /// Extra usage is noise until it is switched on or has actually been spent.

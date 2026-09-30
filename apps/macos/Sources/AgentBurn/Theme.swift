@@ -21,6 +21,9 @@ enum BurnTheme {
     light: NSColor(white: 0, alpha: 0.07), dark: NSColor(white: 1, alpha: 0.1))
   static let hover = adaptiveQuotaColor(
     light: NSColor(white: 0, alpha: 0.04), dark: NSColor(white: 1, alpha: 0.05))
+  /// Recessed panels inside a card.
+  static let inset = adaptiveQuotaColor(
+    light: NSColor(white: 0, alpha: 0.025), dark: NSColor(white: 0, alpha: 0.16))
   // Pace status: recorded remaining above the ideal line is ahead, below is behind.
   static let ahead = Color.green
   static let behind = Color.red
@@ -186,7 +189,9 @@ struct IconBadge: View {
       .font(.system(size: size * 0.5, weight: .semibold))
       .foregroundStyle(tint)
       .frame(width: size, height: size)
-      .background(tint.opacity(0.14), in: RoundedRectangle(cornerRadius: size * 0.3, style: .continuous))
+      .background(
+        tint.opacity(0.14), in: RoundedRectangle(cornerRadius: size * 0.3, style: .continuous)
+      )
       .accessibilityHidden(true)
   }
 }
@@ -227,7 +232,7 @@ struct MetricTile: View {
           .foregroundStyle(compact ? BurnTheme.quotaMuted : BurnTheme.muted).lineLimit(1)
       }
       Text(value)
-        .font(.system(size: compact ? 21 : 28, weight: .semibold, design: .rounded))
+        .font(.system(size: compact ? 21 : 24, weight: .semibold, design: .rounded))
         .monospacedDigit().lineLimit(1).minimumScaleFactor(0.6)
         .contentTransition(.numericText())
         .animation(.snappy, value: value)
