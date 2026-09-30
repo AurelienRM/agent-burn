@@ -18,9 +18,8 @@ pub(super) fn snapshot(agent: &str, offline: bool) -> Option<Value> {
             )
         }
         "claude" => {
-            let limits = claude::usage_limits(offline)?;
+            let (limits, now) = claude::live_usage_limits(offline)?;
             let window = limits.seven_day?;
-            let now = utc_now();
             let mut weekly = reading(agent, window.utilization, 10080, window.resets_at?, now)?;
             if let Some(session) = limits.five_hour.and_then(|session| {
                 reading(agent, session.utilization, 300, session.resets_at?, now)

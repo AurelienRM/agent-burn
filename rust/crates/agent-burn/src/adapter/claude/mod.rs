@@ -2,8 +2,9 @@ mod daily;
 mod limits;
 mod paths;
 mod plan;
+mod usage_cache;
 
-pub(crate) use limits::{load_account, usage_limits};
+pub(crate) use limits::{live_usage_limits, load_account, usage_limits};
 pub(crate) use plan::detected_plan_tier;
 
 use std::{

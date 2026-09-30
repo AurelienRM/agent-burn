@@ -2,7 +2,8 @@ use std::{fs, time::Duration};
 
 use serde_json::{Value, json};
 
-use crate::{TimestampMs, home, parse_ts_timestamp};
+use super::usage_cache::{self, UsageCache};
+use crate::{TimestampMs, home, parse_ts_timestamp, utc_now};
 
 const USAGE_URL: &str = "https://api.anthropic.com/api/oauth/usage";
 const FETCH_TIMEOUT_SECONDS: u64 = 5;
@@ -41,24 +42,55 @@ pub(crate) struct ClaudeUsageLimits {
     pub(crate) extra_usage: Option<ExtraUsage>,
 }
 
-/// Fetch the signed-in account's live usage limits from Anthropic, mirroring
-/// the call Claude Code's status line makes. Returns `None` when offline, when
-/// no OAuth token is available, or on any network error (never fatal).
+/// The signed-in account's usage limits from Anthropic, mirroring the call
+/// Claude Code's status line makes. Reports accept a shared reading up to
+/// 15 minutes old while the endpoint is rate limited. Returns `None` when
+/// offline, when no OAuth token is available, or when nothing usable is cached.
 pub(crate) fn usage_limits(offline: bool) -> Option<ClaudeUsageLimits> {
+    usage_body(offline, usage_cache::STALE_MS).and_then(|(body, _)| parse_usage_limits(&body))
+}
+
+/// Limits for the quota collector, stamped with when Anthropic reported them
+/// so a shared cached reading is never recorded as a newer observation.
+pub(crate) fn live_usage_limits(offline: bool) -> Option<(ClaudeUsageLimits, TimestampMs)> {
+    let (body, observed_at) = usage_body(offline, usage_cache::FRESH_MS)?;
+    Some((parse_usage_limits(&body)?, observed_at))
+}
+
+fn usage_body(offline: bool, max_age_ms: i64) -> Option<(String, TimestampMs)> {
     if offline {
         return None;
     }
-    let token = oauth_token()?;
-    fetch_usage_limits(&token)
+    let now = utc_now();
+    let mut cache = UsageCache::load();
+    if let Some((body, fetched_at)) = cache.body_within(now, usage_cache::FRESH_MS) {
+        return Some((body.to_string(), fetched_at));
+    }
+    if !cache.is_blocked(now) {
+        match oauth_token().map(|token| fetch_usage_body(&token)) {
+            Some(Fetch::Body(body)) => {
+                cache.store_body(body.clone(), now);
+                return Some((body, now));
+            }
+            Some(Fetch::RateLimited(retry_after)) => cache.store_rate_limit(retry_after, now),
+            Some(Fetch::Failed) | None => {}
+        }
+    }
+    cache
+        .body_within(now, max_age_ms)
+        .map(|(body, fetched_at)| (body.to_string(), fetched_at))
 }
 
 /// Current Claude meters for `summary --value --json`, omitted when offline or empty.
 pub(crate) fn load_account(offline: bool) -> Option<Value> {
-    let limits = usage_limits(offline)?;
+    let (body, observed_at) = usage_body(offline, usage_cache::STALE_MS)?;
+    let limits = parse_usage_limits(&body)?;
     if limits == ClaudeUsageLimits::default() {
         return None;
     }
-    Some(account_json(&limits))
+    let mut account = account_json(&limits);
+    account["observedAtMs"] = json!(observed_at.as_millis());
+    Some(account)
 }
 
 fn oauth_token() -> Option<String> {
@@ -101,12 +133,19 @@ fn token_from_credentials(json: &str) -> Option<String> {
         .map(str::to_string)
 }
 
-fn fetch_usage_limits(token: &str) -> Option<ClaudeUsageLimits> {
+enum Fetch {
+    Body(String),
+    RateLimited(Option<i64>),
+    Failed,
+}
+
+fn fetch_usage_body(token: &str) -> Fetch {
     let agent = ureq::Agent::config_builder()
         .timeout_global(Some(Duration::from_secs(FETCH_TIMEOUT_SECONDS)))
+        .http_status_as_error(false)
         .build()
         .new_agent();
-    let mut response = agent
+    let Ok(mut response) = agent
         .get(USAGE_URL)
         .header("Authorization", &format!("Bearer {token}"))
         .header("anthropic-beta", "oauth-2025-04-20")
@@ -116,17 +155,31 @@ fn fetch_usage_limits(token: &str) -> Option<ClaudeUsageLimits> {
             concat!("claude-code/", env!("CARGO_PKG_VERSION")),
         )
         .call()
-        .ok()?;
-    if response.status().as_u16() != 200 {
-        return None;
+    else {
+        return Fetch::Failed;
+    };
+    match response.status().as_u16() {
+        200 => {}
+        429 => {
+            return Fetch::RateLimited(
+                response
+                    .headers()
+                    .get("retry-after")
+                    .and_then(|value| value.to_str().ok())
+                    .and_then(|value| value.trim().parse().ok()),
+            );
+        }
+        _ => return Fetch::Failed,
     }
-    let body = response
+    match response
         .body_mut()
         .with_config()
         .limit(FETCH_MAX_BYTES)
         .read_to_string()
-        .ok()?;
-    parse_usage_limits(&body)
+    {
+        Ok(body) if parse_usage_limits(&body).is_some() => Fetch::Body(body),
+        _ => Fetch::Failed,
+    }
 }
 
 fn parse_usage_limits(body: &str) -> Option<ClaudeUsageLimits> {
