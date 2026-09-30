@@ -47,53 +47,121 @@ pub(crate) struct ClaudeUsageLimits {
 /// 15 minutes old while the endpoint is rate limited. Returns `None` when
 /// offline, when no OAuth token is available, or when nothing usable is cached.
 pub(crate) fn usage_limits(offline: bool) -> Option<ClaudeUsageLimits> {
-    usage_body(offline, usage_cache::STALE_MS).and_then(|(body, _)| parse_usage_limits(&body))
+    usage_body(offline, usage_cache::STALE_MS)
+        .body
+        .and_then(|(body, _)| parse_usage_limits(&body))
 }
 
 /// Limits for the quota collector, stamped with when Anthropic reported them
 /// so a shared cached reading is never recorded as a newer observation.
 pub(crate) fn live_usage_limits(offline: bool) -> Option<(ClaudeUsageLimits, TimestampMs)> {
-    let (body, observed_at) = usage_body(offline, usage_cache::FRESH_MS)?;
+    let (body, observed_at) = usage_body(offline, usage_cache::FRESH_MS).body?;
     Some((parse_usage_limits(&body)?, observed_at))
 }
 
-fn usage_body(offline: bool, max_age_ms: i64) -> Option<(String, TimestampMs)> {
+/// A usage body with when Anthropic reported it, and whether Claude Code's
+/// sign-in has lapsed so the meters cannot update until `claude` runs again.
+#[derive(Debug, Default)]
+struct Usage {
+    body: Option<(String, TimestampMs)>,
+    sign_in_expired: bool,
+}
+
+fn usage_body(offline: bool, max_age_ms: i64) -> Usage {
     if offline {
-        return None;
+        return Usage::default();
     }
-    let now = utc_now();
-    let mut cache = UsageCache::load();
-    if let Some((body, fetched_at)) = cache.body_within(now, usage_cache::FRESH_MS) {
-        return Some((body.to_string(), fetched_at));
+    resolve_usage(
+        &mut UsageCache::load(),
+        utc_now(),
+        max_age_ms,
+        oauth_token,
+        fetch_usage_body,
+    )
+}
+
+fn resolve_usage(
+    cache: &mut UsageCache,
+    now: TimestampMs,
+    max_age_ms: i64,
+    token: impl FnOnce() -> Option<OAuthToken>,
+    fetch: impl FnOnce(&str) -> Fetch,
+) -> Usage {
+    let cached = |cache: &UsageCache, max_age_ms| {
+        cache
+            .body_within(now, max_age_ms)
+            .map(|(body, fetched_at)| (body.to_string(), fetched_at))
+    };
+    if let Some(body) = cached(cache, usage_cache::FRESH_MS) {
+        return Usage {
+            body: Some(body),
+            sign_in_expired: false,
+        };
     }
-    if !cache.is_blocked(now) {
-        match oauth_token().map(|token| fetch_usage_body(&token)) {
-            Some(Fetch::Body(body)) => {
+    let mut sign_in_expired = false;
+    match token() {
+        // Anthropic answers an expired token with a 429 and an hour-long
+        // Retry-After, so sending it would also block the refreshed token.
+        Some(token) if token.is_expired(now) => sign_in_expired = true,
+        Some(token) if !cache.is_blocked(now) => match fetch(&token.access_token) {
+            Fetch::Body(body) => {
                 cache.store_body(body.clone(), now);
-                return Some((body, now));
+                return Usage {
+                    body: Some((body, now)),
+                    sign_in_expired: false,
+                };
             }
-            Some(Fetch::RateLimited(retry_after)) => cache.store_rate_limit(retry_after, now),
-            Some(Fetch::Failed) | None => {}
+            Fetch::RateLimited(retry_after) => cache.store_rate_limit(retry_after, now),
+            Fetch::Unauthorized => sign_in_expired = true,
+            Fetch::Failed => {}
+        },
+        _ => {}
+    }
+    Usage {
+        body: cached(cache, max_age_ms),
+        sign_in_expired,
+    }
+}
+
+/// Claude meters for `summary --value --json`.
+pub(crate) struct AccountLoad {
+    /// Latest meters, omitted when offline or when nothing usable is cached.
+    pub(crate) account: Option<Value>,
+    /// Claude Code's token has expired; only running `claude` refreshes it.
+    pub(crate) sign_in_expired: bool,
+}
+
+pub(crate) fn load_account(offline: bool) -> AccountLoad {
+    let usage = usage_body(offline, usage_cache::STALE_MS);
+    let account = usage.body.and_then(|(body, observed_at)| {
+        let limits = parse_usage_limits(&body)?;
+        if limits == ClaudeUsageLimits::default() {
+            return None;
         }
+        let mut account = account_json(&limits);
+        account["observedAtMs"] = json!(observed_at.as_millis());
+        Some(account)
+    });
+    AccountLoad {
+        account,
+        sign_in_expired: usage.sign_in_expired,
     }
-    cache
-        .body_within(now, max_age_ms)
-        .map(|(body, fetched_at)| (body.to_string(), fetched_at))
 }
 
-/// Current Claude meters for `summary --value --json`, omitted when offline or empty.
-pub(crate) fn load_account(offline: bool) -> Option<Value> {
-    let (body, observed_at) = usage_body(offline, usage_cache::STALE_MS)?;
-    let limits = parse_usage_limits(&body)?;
-    if limits == ClaudeUsageLimits::default() {
-        return None;
-    }
-    let mut account = account_json(&limits);
-    account["observedAtMs"] = json!(observed_at.as_millis());
-    Some(account)
+/// Claude Code's OAuth access token. Only the `claude` CLI refreshes it.
+#[derive(Debug, PartialEq)]
+struct OAuthToken {
+    access_token: String,
+    expires_at: Option<TimestampMs>,
 }
 
-fn oauth_token() -> Option<String> {
+impl OAuthToken {
+    fn is_expired(&self, now: TimestampMs) -> bool {
+        self.expires_at.is_some_and(|expires_at| now >= expires_at)
+    }
+}
+
+fn oauth_token() -> Option<OAuthToken> {
     #[cfg(target_os = "macos")]
     if let Some(token) = keychain_token() {
         return Some(token);
@@ -102,7 +170,7 @@ fn oauth_token() -> Option<String> {
 }
 
 #[cfg(target_os = "macos")]
-fn keychain_token() -> Option<String> {
+fn keychain_token() -> Option<OAuthToken> {
     let output = std::process::Command::new("security")
         .args([
             "find-generic-password",
@@ -119,23 +187,27 @@ fn keychain_token() -> Option<String> {
     token_from_credentials(&json)
 }
 
-fn file_token() -> Option<String> {
+fn file_token() -> Option<OAuthToken> {
     let path = home::home_dir()?.join(".claude").join(".credentials.json");
     token_from_credentials(&fs::read_to_string(path).ok()?)
 }
 
-fn token_from_credentials(json: &str) -> Option<String> {
+fn token_from_credentials(json: &str) -> Option<OAuthToken> {
     let value = serde_json::from_str::<Value>(json.trim()).ok()?;
-    value
-        .get("claudeAiOauth")?
-        .get("accessToken")?
-        .as_str()
-        .map(str::to_string)
+    let oauth = value.get("claudeAiOauth")?;
+    Some(OAuthToken {
+        access_token: oauth.get("accessToken")?.as_str()?.to_string(),
+        expires_at: oauth
+            .get("expiresAt")
+            .and_then(Value::as_i64)
+            .map(TimestampMs::from_millis),
+    })
 }
 
 enum Fetch {
     Body(String),
     RateLimited(Option<i64>),
+    Unauthorized,
     Failed,
 }
 
@@ -160,6 +232,7 @@ fn fetch_usage_body(token: &str) -> Fetch {
     };
     match response.status().as_u16() {
         200 => {}
+        401 => return Fetch::Unauthorized,
         429 => {
             return Fetch::RateLimited(
                 response
@@ -520,11 +593,107 @@ mod tests {
     }
 
     #[test]
-    fn reads_access_token_from_credentials_json() {
-        let json = r#"{"claudeAiOauth":{"accessToken":"sk-ant-oat-abc","refreshToken":"r","expiresAt":1}}"#;
-        assert_eq!(
-            token_from_credentials(json).as_deref(),
-            Some("sk-ant-oat-abc")
+    fn reads_access_token_and_expiry_from_credentials_json() {
+        let json = r#"{"claudeAiOauth":{"accessToken":"sk-ant-oat-abc","refreshToken":"r","expiresAt":1800000000000}}"#;
+        let token = token_from_credentials(json).unwrap();
+        assert_eq!(token.access_token, "sk-ant-oat-abc");
+        let expires_at = TimestampMs::from_millis(1_800_000_000_000);
+        assert!(!token.is_expired(expires_at.checked_sub_millis(1).unwrap()));
+        assert!(token.is_expired(expires_at));
+
+        let without_expiry =
+            token_from_credentials(r#"{"claudeAiOauth":{"accessToken":"sk"}}"#).unwrap();
+        assert!(!without_expiry.is_expired(expires_at));
+    }
+
+    fn stale_cache(now: TimestampMs) -> UsageCache {
+        UsageCache {
+            fetched_at: now.checked_sub_millis(5 * 60_000),
+            body: Some(r#"{"five_hour":null}"#.into()),
+            blocked_until: None,
+        }
+    }
+
+    fn token(expires_at: Option<TimestampMs>) -> Option<OAuthToken> {
+        Some(OAuthToken {
+            access_token: "sk-ant-oat".into(),
+            expires_at,
+        })
+    }
+
+    #[test]
+    fn never_sends_an_expired_token_and_keeps_the_last_reading() {
+        let now = TimestampMs::from_unix_seconds(1_800_000_000).unwrap();
+        let mut cache = stale_cache(now);
+
+        let usage = resolve_usage(
+            &mut cache,
+            now,
+            usage_cache::STALE_MS,
+            || token(Some(now)),
+            |_| panic!("an expired token must not reach Anthropic"),
         );
+
+        assert!(usage.sign_in_expired);
+        assert_eq!(usage.body.map(|(_, at)| at), cache.fetched_at);
+        assert_eq!(cache.blocked_until, None);
+    }
+
+    #[test]
+    fn expired_sign_in_is_reported_even_while_rate_limited() {
+        let now = TimestampMs::from_unix_seconds(1_800_000_000).unwrap();
+        let mut cache = UsageCache {
+            blocked_until: now.checked_add_millis(60_000),
+            ..stale_cache(now)
+        };
+
+        let usage = resolve_usage(
+            &mut cache,
+            now,
+            usage_cache::FRESH_MS,
+            || token(now.checked_sub_millis(1)),
+            |_| panic!("an expired token must not reach Anthropic"),
+        );
+
+        assert!(usage.sign_in_expired);
+        assert!(usage.body.is_none());
+    }
+
+    #[test]
+    fn rejected_token_reports_expired_sign_in_without_blocking() {
+        let now = TimestampMs::from_unix_seconds(1_800_000_000).unwrap();
+        let mut cache = stale_cache(now);
+
+        let usage = resolve_usage(
+            &mut cache,
+            now,
+            usage_cache::STALE_MS,
+            || token(None),
+            |_| Fetch::Unauthorized,
+        );
+
+        assert!(usage.sign_in_expired);
+        assert!(usage.body.is_some());
+        assert_eq!(cache.blocked_until, None);
+    }
+
+    #[test]
+    fn fresh_shared_reading_skips_the_keychain() {
+        let now = TimestampMs::from_unix_seconds(1_800_000_000).unwrap();
+        let mut cache = UsageCache {
+            fetched_at: now.checked_sub_millis(10_000),
+            ..stale_cache(now)
+        };
+
+        let usage = resolve_usage(
+            &mut cache,
+            now,
+            usage_cache::FRESH_MS,
+            || panic!("a fresh shared reading must not read credentials"),
+            |_| panic!("a fresh shared reading must not refetch"),
+        );
+
+        assert!(!usage.sign_in_expired);
+        assert_eq!(usage.body.map(|(_, at)| at), cache.fetched_at);
     }
 }

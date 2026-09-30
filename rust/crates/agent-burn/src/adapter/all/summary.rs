@@ -106,9 +106,14 @@ pub(super) fn run(args: SummaryArgs) -> Result<()> {
         }
         if value
             && (shared.agents.is_empty() || shared.agents.iter().any(|agent| agent == "claude"))
-            && let Some(account) = claude::load_account(shared.offline)
         {
-            output["claudeAccount"] = account;
+            let claude = claude::load_account(shared.offline);
+            if let Some(account) = claude.account {
+                output["claudeAccount"] = account;
+            }
+            if claude.sign_in_expired {
+                output["claudeAccountStatus"] = json!("signInExpired");
+            }
         }
         if let (Some(object), Some(subscription)) = (output.as_object_mut(), subscription.as_ref())
         {

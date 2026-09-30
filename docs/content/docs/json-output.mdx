@@ -61,3 +61,8 @@ Claude’s live OAuth usage meters, including the modern `limits` array.
 Extra-usage amounts are dollars. Absent amounts are null, not zero. These
 current account meters are distinct from historical API-equivalent spend and
 are omitted in offline mode.
+
+When the Claude Code sign-in has expired, the output adds
+`claudeAccountStatus: "signInExpired"` and keeps the last shared reading in
+`claudeAccount` when one is still available. Run `claude` once to refresh the
+sign-in; Agent Burn never sends an expired token or refreshes it itself.

@@ -44,3 +44,9 @@ OAuth token. The parser accepts the modern `limits` array (`session`,
 `weekly_all`, `weekly_scoped`) and the older top-level `five_hour` /
 `seven_day` windows, plus `extra_usage` or `spend` credits. `--offline`
 omits the account object.
+
+The token's `expiresAt` is checked before any request. An expired token, or a
+401 from the endpoint, sets `claudeAccountStatus: "signInExpired"` instead of
+calling Anthropic, so a stale token never earns a 429 backoff that would also
+block the refreshed one. Agent Burn does not refresh the token itself; running
+`claude` does.
