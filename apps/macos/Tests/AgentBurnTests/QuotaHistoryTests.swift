@@ -31,6 +31,25 @@ private func reading(
   #expect(resets.count == 2)
 }
 
+@Test func quotaHistoryDropsOverCountsContradictedWithinTheSameWindow() {
+  var history = QuotaHistory()
+  let start = Date(timeIntervalSince1970: 1_000_000)
+  let week = 10080.0 * 60
+  // Same window: elapsed advances with the clock, so every reading shares one start.
+  for (index, used) in [40.0, 42, 85, 87, 43, 88, 44].enumerated() {
+    let offset = Double(index) * 600
+    history.record(
+      reading(used, elapsed: 50 + offset / week * 100, date: start.addingTimeInterval(offset)),
+      source: "test")
+  }
+  // A genuine reset starts a new window and is still kept and counted.
+  history.record(reading(1, elapsed: 0.5, date: start.addingTimeInterval(4_800)), source: "test")
+
+  let remaining = history.samples(agent: "codex", source: "test").map(\.remaining)
+  #expect(remaining == [60, 58, 57, 56, 99])
+  #expect(history.resets(agent: "codex", source: "test").count == 1)
+}
+
 @Test func quotaHistorySurvivesCollectorFailureAndCorruptPrimary() throws {
   let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
   defer { try? FileManager.default.removeItem(at: directory) }

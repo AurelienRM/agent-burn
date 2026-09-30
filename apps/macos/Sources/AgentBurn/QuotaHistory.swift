@@ -42,25 +42,36 @@ struct QuotaHistory: Codable {
     readings[source]?[agent]?.last
   }
 
-  /// Readings with stale replays removed. A new window start means a genuine
-  /// reset and starts a new segment, but a reading whose window start matches
-  /// an older, superseded segment is a provider replay of that old cycle and
-  /// is skipped so it cannot carve a dip into the chart.
+  /// Readings with stale replays and over-counts removed. A new window start
+  /// means a genuine reset and starts a new segment, but a reading whose window
+  /// start matches an older, superseded segment is a provider replay of that old
+  /// cycle and is skipped so it cannot carve a dip into the chart. Usage never
+  /// falls within one window, so a later, lower reading of the same segment
+  /// proves the higher ones before it were provider over-counts (Codex served
+  /// 99% while enforcing 49%); those are skipped too.
   func cycleConsistentReadings(agent: String, source: String) -> [QuotaReading] {
-    var kept: [QuotaReading] = []
+    var kept: [(reading: QuotaReading, segment: Int)] = []
     var segmentStarts: [Date] = []
     for reading in readings[source]?[agent] ?? [] {
       let start = reading.windowStart
       if let last = segmentStarts.last, abs(start.timeIntervalSince(last)) <= 300 {
-        kept.append(reading)
+        kept.append((reading, segmentStarts.count - 1))
       } else if segmentStarts.contains(where: { abs(start.timeIntervalSince($0)) <= 300 }) {
         continue
       } else {
         segmentStarts.append(start)
-        kept.append(reading)
+        kept.append((reading, segmentStarts.count - 1))
       }
     }
-    return kept
+    var lowestLater: [Int: Double] = [:]
+    var consistent: [QuotaReading] = []
+    for (reading, segment) in kept.reversed() {
+      let used = reading.window.usedPercent
+      if let floor = lowestLater[segment], used > floor + 1 { continue }
+      lowestLater[segment] = min(used, lowestLater[segment] ?? used)
+      consistent.append(reading)
+    }
+    return consistent.reversed()
   }
 
   func samples(agent: String, source: String) -> [QuotaSample] {
