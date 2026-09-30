@@ -458,7 +458,7 @@ final class UsageStore {
 
   func forecast(for agent: String) -> Forecast? {
     if agent == "cursor" { return cursorForecast() }
-    if let reading = quotaHistory.latest(agent: agent, source: quotaSourceKey) {
+    if let reading = quotaHistory.current(agent: agent, source: quotaSourceKey) {
       return Forecast(window: reading.window, observedAt: reading.date, isLive: true)
     }
     guard let window = reports[agent]?.window, window.isValid, let date = updated[agent] else {
@@ -470,7 +470,7 @@ final class UsageStore {
   private func cursorForecast() -> Forecast? {
     cursorMeterForecast(
       account: summary?.cursorAccount, now: quotaCheckDate,
-      stored: quotaHistory.latest(agent: "cursor", source: quotaSourceKey).map {
+      stored: quotaHistory.current(agent: "cursor", source: quotaSourceKey).map {
         Forecast(window: $0.window, observedAt: $0.date, isLive: true)
       })
   }

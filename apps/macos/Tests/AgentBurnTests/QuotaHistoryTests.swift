@@ -50,6 +50,42 @@ private func reading(
   #expect(history.resets(agent: "codex", source: "test").count == 1)
 }
 
+@Test func quotaHistoryHoldsAnUnconfirmedWeeklySpikeBack() {
+  var history = QuotaHistory()
+  let start = Date(timeIntervalSince1970: 1_000_000)
+  let week = 10080.0 * 60
+  func record(_ used: Double, after offset: TimeInterval) {
+    history.record(
+      reading(used, elapsed: 50 + offset / week * 100, date: start.addingTimeInterval(offset)),
+      source: "test")
+  }
+  for (index, used) in [50.0, 100, 50, 100].enumerated() { record(used, after: Double(index) * 60) }
+  #expect(history.current(agent: "codex", source: "test")?.window.usedPercent == 50)
+  #expect(history.samples(agent: "codex", source: "test").map(\.remaining) == [50, 50])
+  #expect(history.resets(agent: "codex", source: "test").isEmpty)
+
+  // Half an hour without a lower reading confirms the new level.
+  record(100, after: 2_400)
+  #expect(history.current(agent: "codex", source: "test")?.window.usedPercent == 100)
+  #expect(history.samples(agent: "codex", source: "test").map(\.remaining) == [50, 50, 0, 0])
+}
+
+@Test func quotaHistoryShowsFastSessionGrowthAsIs() {
+  var history = QuotaHistory()
+  let start = Date(timeIntervalSince1970: 1_000_000)
+  for (index, used) in [10.0, 30].enumerated() {
+    history.record(
+      QuotaReading(
+        agent: "claude-session",
+        observedAt: (start.timeIntervalSince1970 + Double(index) * 60) * 1000,
+        window: QuotaWindow(
+          windowMinutes: 300, usedPercent: used, elapsedPercent: 20 + Double(index) / 3,
+          apiEquivalentSpent: 0)),
+      source: "test")
+  }
+  #expect(history.current(agent: "claude-session", source: "test")?.window.usedPercent == 30)
+}
+
 @Test func quotaHistorySurvivesCollectorFailureAndCorruptPrimary() throws {
   let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
   defer { try? FileManager.default.removeItem(at: directory) }

@@ -42,13 +42,34 @@ struct QuotaHistory: Codable {
     readings[source]?[agent]?.last
   }
 
+  /// The newest reading safe to show as the live meter. On a weekly window a
+  /// reading far above the lowest one of the last half hour is an unconfirmed
+  /// provider over-count, so the latest plausible reading stands in for it.
+  func current(agent: String, source: String) -> QuotaReading? {
+    guard let all = readings[source]?[agent], let newest = all.last else { return nil }
+    let recent = all.reversed().prefix { Self.isRecent($0, to: newest) }
+    guard let floor = recent.map(\.window.usedPercent).min() else { return newest }
+    return recent.first { !Self.isOverCount($0, floor: floor) } ?? newest
+  }
+
+  /// Weekly usage cannot roughly double within half an hour of one window.
+  private static func isRecent(_ reading: QuotaReading, to newest: QuotaReading) -> Bool {
+    newest.date.timeIntervalSince(reading.date) <= 1800
+      && abs(reading.windowStart.timeIntervalSince(newest.windowStart)) <= 300
+  }
+
+  private static func isOverCount(_ reading: QuotaReading, floor: Double) -> Bool {
+    reading.window.windowMinutes >= 2 * 24 * 60 && reading.window.usedPercent > floor * 1.5 + 3
+  }
+
   /// Readings with stale replays and over-counts removed. A new window start
   /// means a genuine reset and starts a new segment, but a reading whose window
   /// start matches an older, superseded segment is a provider replay of that old
   /// cycle and is skipped so it cannot carve a dip into the chart. Usage never
   /// falls within one window, so a later, lower reading of the same segment
   /// proves the higher ones before it were provider over-counts (Codex served
-  /// 99% while enforcing 49%); those are skipped too.
+  /// 99% while enforcing 49%); those are skipped too, and a trailing jump is
+  /// held back the same way `current` holds it.
   func cycleConsistentReadings(agent: String, source: String) -> [QuotaReading] {
     var kept: [(reading: QuotaReading, segment: Int)] = []
     var segmentStarts: [Date] = []
@@ -71,7 +92,16 @@ struct QuotaHistory: Codable {
       lowestLater[segment] = min(used, lowestLater[segment] ?? used)
       consistent.append(reading)
     }
-    return consistent.reversed()
+    var chronological = Array(consistent.reversed())
+    if let newest = chronological.last,
+      let floor = consistent.prefix(while: { Self.isRecent($0, to: newest) })
+        .map(\.window.usedPercent).min()
+    {
+      while let last = chronological.last, Self.isOverCount(last, floor: floor) {
+        chronological.removeLast()
+      }
+    }
+    return chronological
   }
 
   func samples(agent: String, source: String) -> [QuotaSample] {
