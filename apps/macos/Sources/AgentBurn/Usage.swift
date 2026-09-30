@@ -8,6 +8,8 @@ struct SummaryReport: Codable, Sendable {
   let subscription: SubscriptionReport?
   var cursorAccount: CursorAccount? = nil
   var claudeAccount: ClaudeAccount? = nil
+  /// `signInExpired` when Claude Code's token lapsed and the meters cannot update.
+  var claudeAccountStatus: String? = nil
 }
 
 struct Totals: Codable, Sendable {
@@ -887,18 +889,31 @@ func cursorMeterForecast(account: CursorAccount?, now: Date, stored: Forecast?) 
 }
 
 func claudeSessionReading(_ account: ClaudeAccount, now current: Date = .now) -> QuotaReading? {
-  guard let used = account.sessionUsedPercent, used.isFinite, (0...100).contains(used),
-    let resetMs = account.sessionResetsAtMs
-  else { return nil }
+  claudeAccountReading(
+    account, agent: claudeSessionQuotaAgent, used: account.sessionUsedPercent,
+    resetMs: account.sessionResetsAtMs, minutes: 300, now: current)
+}
+
+func claudeWeeklyReading(_ account: ClaudeAccount, now current: Date = .now) -> QuotaReading? {
+  claudeAccountReading(
+    account, agent: "claude", used: account.weeklyUsedPercent,
+    resetMs: account.weeklyResetsAtMs, minutes: 10080, now: current)
+}
+
+private func claudeAccountReading(
+  _ account: ClaudeAccount, agent: String, used: Double?, resetMs: Double?, minutes: Double,
+  now current: Date
+) -> QuotaReading? {
+  guard let used, used.isFinite, (0...100).contains(used), let resetMs else { return nil }
   let now = account.observedAtMs.map { Date(timeIntervalSince1970: $0 / 1000) } ?? current
-  let duration: TimeInterval = 5 * 3600
+  let duration = minutes * 60
   let reset = Date(timeIntervalSince1970: resetMs / 1000)
   let elapsed = (duration - reset.timeIntervalSince(now)) / duration * 100
   guard reset > now, (0...100).contains(elapsed) else { return nil }
   return QuotaReading(
-    agent: claudeSessionQuotaAgent, observedAt: now.timeIntervalSince1970 * 1000,
+    agent: agent, observedAt: now.timeIntervalSince1970 * 1000,
     window: QuotaWindow(
-      windowMinutes: 300, usedPercent: used, elapsedPercent: elapsed, apiEquivalentSpent: 0))
+      windowMinutes: minutes, usedPercent: used, elapsedPercent: elapsed, apiEquivalentSpent: 0))
 }
 
 func cursorQuotaReading(_ account: CursorAccount, now: Date = .now) -> QuotaReading? {

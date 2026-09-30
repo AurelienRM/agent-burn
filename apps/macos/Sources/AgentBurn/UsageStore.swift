@@ -76,6 +76,7 @@ final class UsageStore {
   private let historyURL: URL
   private let cacheURL: URL
   private var cache: ReportCache?
+  private var storedClaudeAccount: ClaudeAccount?
   private var archive = MetricsArchive()
   private var archiveWritable = true
   var archiveURL: URL {
@@ -133,6 +134,9 @@ final class UsageStore {
         updated[agent] = saved.date
       }
     }
+    storedClaudeAccount = ClaudeAccountFile(directory: cacheURL.deletingLastPathComponent()).load()
+    rememberClaudeAccount(
+      latestClaudeAccount(cache?.summaries.values.compactMap(\.report.claudeAccount) ?? []))
     do {
       archive = try MetricsArchiveFile(url: archiveURL).load() ?? MetricsArchive()
       for (key, saved) in (cache?.summaries ?? [:]).sorted(by: { lhs, rhs in
@@ -324,9 +328,12 @@ final class UsageStore {
     summary?.cursorAccount =
       cache?.summaries.values.sorted { $0.date > $1.date }
       .compactMap { $0.report.cursorAccount }.first
-    summary?.claudeAccount =
-      cache?.summaries.values.sorted { $0.date > $1.date }
-      .compactMap { $0.report.claudeAccount }.first
+    let claudeReports =
+      cache?.summaries.values.sorted { $0.date > $1.date }.map(\.report)
+      .filter { $0.claudeAccount != nil || $0.claudeAccountStatus != nil } ?? []
+    summary?.claudeAccount = latestClaudeAccount(
+      claudeReports.compactMap(\.claudeAccount) + [storedClaudeAccount].compactMap { $0 })
+    summary?.claudeAccountStatus = claudeReports.first?.claudeAccountStatus
     updated["summary"] = saved?.date
     errors["summary"] = summaryErrors[currentQuery.cacheKey]
   }
@@ -374,6 +381,7 @@ final class UsageStore {
       guard source == sourceKey else { return }
       cache?.summaries[query.cacheKey] = CachedReport(report: report, date: .now)
       saveCache()
+      rememberClaudeAccount(report.claudeAccount)
       recordAccountQuotas(report)
       archive.ingest(report, policy: metricsIngestPolicy(for: query.cacheKey))
       if archiveWritable {
@@ -471,6 +479,7 @@ final class UsageStore {
     let readings = [
       report.cursorAccount.flatMap { cursorQuotaReading($0) },
       report.claudeAccount.flatMap { claudeSessionReading($0) },
+      report.claudeAccount.flatMap { claudeWeeklyReading($0) },
     ].compactMap { $0 }
     guard !readings.isEmpty else { return }
     do {
@@ -480,6 +489,20 @@ final class UsageStore {
     } catch {
       errors["quotaHistory"] =
         "Quota history could not be saved. Existing readings are preserved."
+    }
+  }
+
+  private func rememberClaudeAccount(_ account: ClaudeAccount?) {
+    guard let account,
+      (account.observedAtMs ?? 0) >= (storedClaudeAccount?.observedAtMs ?? 0)
+    else { return }
+    storedClaudeAccount = account
+    do {
+      try ClaudeAccountFile(directory: cacheURL.deletingLastPathComponent()).save(account)
+      errors["claudeAccount"] = nil
+    } catch {
+      errors["claudeAccount"] =
+        "Claude account meters could not be saved. The last saved reading is preserved."
     }
   }
 

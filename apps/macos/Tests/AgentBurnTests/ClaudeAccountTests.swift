@@ -86,3 +86,94 @@ private func claudeForecast(minutes: Double, elapsed: Double, used: Double, at n
   #expect(quotaDurationLabel(45 * 60) == "45m")
   #expect(quotaDurationLabel(5 * 86_400 + 6 * 3_600) == "5d 6h")
 }
+
+@Test func claudeAccountFileKeepsNewestReadingAndRecoversFromBackup() throws {
+  let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+  defer { try? FileManager.default.removeItem(at: directory) }
+  let file = ClaudeAccountFile(directory: directory)
+  #expect(file.load() == nil)
+  try file.save(ClaudeAccount(weeklyUsedPercent: 10, observedAtMs: 1))
+  try file.save(ClaudeAccount(weeklyUsedPercent: 20, observedAtMs: 2))
+  #expect(file.load()?.weeklyUsedPercent == 20)
+  try Data("broken".utf8).write(to: file.url)
+  #expect(file.load()?.weeklyUsedPercent == 10)
+}
+
+@Test func latestClaudeAccountPrefersTheNewestObservation() {
+  let older = ClaudeAccount(weeklyUsedPercent: 10, observedAtMs: 1)
+  let newer = ClaudeAccount(weeklyUsedPercent: 20, observedAtMs: 2)
+  #expect(latestClaudeAccount([older, newer])?.weeklyUsedPercent == 20)
+  #expect(latestClaudeAccount([newer, older])?.weeklyUsedPercent == 20)
+  #expect(latestClaudeAccount([]) == nil)
+}
+
+@MainActor private func claudeStore(
+  cached: ClaudeAccount?, status: String?, saved: ClaudeAccount?,
+  in directory: URL, defaults: UserDefaults
+) throws -> UsageStore {
+  defaults.set("/missing/cli", forKey: "cliPath")
+  defaults.set("/test/codex", forKey: "codexHomes")
+  if let saved { try ClaudeAccountFile(directory: directory).save(saved) }
+  var report = SummaryReport(
+    totals: Totals(totalCost: 0, totalTokens: 0), agents: [], models: [], daily: nil,
+    subscription: nil)
+  report.claudeAccount = cached
+  report.claudeAccountStatus = status
+  try ReportCacheFile(directory: directory).save(
+    ReportCache(
+      source: "/missing/cli|/test/codex|false",
+      summaries: ["all": CachedReport(report: report, date: .now)], harnesses: [:]))
+  return UsageStore(defaults: defaults, period: .all, storageDirectory: directory)
+}
+
+@Test @MainActor func claudeMetersSurviveRestartAfterSignInExpires() throws {
+  let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+  let suite = "claude-account-\(UUID().uuidString)"
+  let defaults = try #require(UserDefaults(suiteName: suite))
+  defer {
+    defaults.removePersistentDomain(forName: suite)
+    try? FileManager.default.removeItem(at: directory)
+  }
+  let saved = ClaudeAccount(
+    sessionUsedPercent: 30, weeklyUsedPercent: 12,
+    scoped: [ClaudeScopedLimit(name: "Fable", usedPercent: 15, resetsAtMs: nil)],
+    observedAtMs: 2_000)
+  let store = try claudeStore(
+    cached: ClaudeAccount(weeklyUsedPercent: 5, observedAtMs: 1_000), status: "signInExpired",
+    saved: saved, in: directory, defaults: defaults)
+  #expect(store.summary?.claudeAccount?.weeklyUsedPercent == 12)
+  #expect(store.summary?.claudeAccount?.scoped.first?.name == "Fable")
+  #expect(store.summary?.claudeAccountStatus == "signInExpired")
+  #expect(ClaudeAccountFile(directory: directory).load()?.observedAtMs == 2_000)
+}
+
+@Test @MainActor func newerCachedClaudeMetersAreSavedOnLaunch() throws {
+  let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+  let suite = "claude-account-\(UUID().uuidString)"
+  let defaults = try #require(UserDefaults(suiteName: suite))
+  defer {
+    defaults.removePersistentDomain(forName: suite)
+    try? FileManager.default.removeItem(at: directory)
+  }
+  let store = try claudeStore(
+    cached: ClaudeAccount(weeklyUsedPercent: 40, observedAtMs: 3_000), status: nil,
+    saved: ClaudeAccount(weeklyUsedPercent: 12, observedAtMs: 2_000), in: directory,
+    defaults: defaults)
+  #expect(store.summary?.claudeAccount?.weeklyUsedPercent == 40)
+  #expect(store.summary?.claudeAccountStatus == nil)
+  #expect(ClaudeAccountFile(directory: directory).load()?.weeklyUsedPercent == 40)
+}
+
+@Test func claudeWeeklyReadingUsesProviderObservationTime() throws {
+  let observed = Date(timeIntervalSince1970: 1_800_000_000)
+  let account = ClaudeAccount(
+    weeklyUsedPercent: 20,
+    weeklyResetsAtMs: observed.addingTimeInterval(5.25 * 86_400).timeIntervalSince1970 * 1000,
+    observedAtMs: observed.timeIntervalSince1970 * 1000)
+  let weekly = try #require(claudeWeeklyReading(account, now: observed.addingTimeInterval(600)))
+  #expect(weekly.agent == "claude")
+  #expect(weekly.date == observed)
+  #expect(weekly.window.windowMinutes == 10080)
+  #expect(abs(weekly.window.elapsedPercent - 25) < 0.001)
+  #expect(claudeWeeklyReading(ClaudeAccount(weeklyUsedPercent: 20)) == nil)
+}

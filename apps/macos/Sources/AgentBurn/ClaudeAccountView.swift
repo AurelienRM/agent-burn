@@ -62,8 +62,12 @@ struct ClaudeAccountView: View {
   private var now: Date { store.quotaCheckDate }
   private var tint: Color { BurnTheme.color(for: "claude") }
   private var weekly: Forecast? { store.forecast(for: "claude") }
-  private var session: Forecast? {
-    store.forecast(for: claudeSessionQuotaAgent).flatMap { $0.reset > now ? $0 : nil }
+  /// The newest saved session reading, kept after its window resets for the reset time.
+  private var lastSession: Forecast? { store.forecast(for: claudeSessionQuotaAgent) }
+  private var session: Forecast? { lastSession.flatMap { $0.reset > now ? $0 : nil } }
+  private var signInExpired: Bool { store.summary?.claudeAccountStatus == "signInExpired" }
+  private var sessionReset: Date? {
+    [claudeDate(account?.sessionResetsAtMs), lastSession?.reset].compactMap { $0 }.max()
   }
 
   var body: some View {
@@ -79,28 +83,30 @@ struct ClaudeAccountView: View {
           if let latest = weekly ?? session { freshness(latest) }
         }
       }
-      if let verdict = claudeVerdict(session: session, weekly: weekly, now: now) {
+      if signInExpired {
+        ClaudeVerdictBanner(verdict: claudeSignInExpiredVerdict)
+      } else if let verdict = claudeVerdict(session: session, weekly: weekly, now: now) {
         ClaudeVerdictBanner(verdict: verdict)
       }
-      if account != nil || weekly != nil || session != nil {
+      if account != nil || weekly != nil || lastSession != nil {
         HStack(alignment: .top, spacing: 14) {
           ClaudeLimitPanel(
             title: "5-hour session", forecast: session,
             samples: store.samples(for: claudeSessionQuotaAgent, range: .rte, now: now),
             now: now, tint: tint, used: account?.sessionUsedPercent,
-            resetsAt: claudeDate(account?.sessionResetsAtMs))
+            resetsAt: sessionReset, stale: signInExpired)
           ClaudeLimitPanel(
             title: "Weekly", forecast: weekly,
             samples: store.samples(for: "claude", range: .rte, now: now),
             now: now, tint: tint, used: account?.weeklyUsedPercent,
-            resetsAt: claudeDate(account?.weeklyResetsAtMs))
+            resetsAt: claudeDate(account?.weeklyResetsAtMs), stale: signInExpired)
         }
       }
       if let account, !account.scoped.isEmpty || showsExtra(account) {
         Divider()
         secondaryMeters(account)
       }
-      if account == nil {
+      if account == nil && !signInExpired {
         Text(
           "Live account limits are unavailable. Refresh with live data enabled to load Claude’s meters."
         )
@@ -149,6 +155,11 @@ struct ClaudeVerdict: Equatable {
   let headline: String
   let detail: String
 }
+
+/// Anthropic rejects an expired Claude Code token and only the `claude` CLI refreshes it.
+let claudeSignInExpiredVerdict = ClaudeVerdict(
+  atRisk: true, headline: "Claude Code sign-in expired.",
+  detail: "Run claude in Terminal to resume live limits. Showing the last saved readings.")
 
 /// Session run-outs come first because they lock you out soonest.
 func claudeVerdict(session: Forecast?, weekly: Forecast?, now: Date) -> ClaudeVerdict? {
@@ -219,6 +230,8 @@ struct ClaudeLimitPanel: View {
   let tint: Color
   var used: Double? = nil
   var resetsAt: Date? = nil
+  /// The readings cannot update, so even a recent one is only the last known value.
+  var stale = false
 
   private var reset: Date? { forecast?.reset ?? resetsAt }
   private var hasReset: Bool { reset.map { $0 <= now } ?? false }
@@ -244,7 +257,7 @@ struct ClaudeLimitPanel: View {
           Text(title.uppercased())
             .font(.system(size: 11, weight: .semibold)).tracking(0.6)
             .foregroundStyle(BurnTheme.muted)
-          if let forecast, !forecast.isFresh(at: now) {
+          if stale || forecast.map({ !$0.isFresh(at: now) }) == true {
             Image(systemName: "clock.badge.exclamationmark")
               .font(.system(size: 11)).foregroundStyle(.orange)
               .help("Showing the last known reading. Update pending.")
