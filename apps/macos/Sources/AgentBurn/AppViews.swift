@@ -340,6 +340,13 @@ struct QuotaSourceSettings: View {
       )
       .font(.caption).foregroundStyle(.secondary)
     }
+    Section("Notifications") {
+      Toggle("Alert when a quota runs low", isOn: $store.quotaAlerts)
+      Text(
+        "Notifies once per window when the Codex or Claude weekly limit, or the Claude 5-hour session, falls to 20% or less, and when Claude limits stop updating. Alerts are sent while Agent Burn is open."
+      )
+      .font(.caption).foregroundStyle(.secondary)
+    }
   }
 }
 

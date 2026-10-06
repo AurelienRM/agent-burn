@@ -53,6 +53,16 @@
         }
       }
     },
+    "%@ / day": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ / jour"
+          }
+        }
+      }
+    },
     "%@ / month": {
       "localizations": {
         "fr": {
@@ -237,12 +247,32 @@
         }
       }
     },
+    "%@ used · reported by Cursor": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ utilisé · selon Cursor"
+          }
+        }
+      }
+    },
     "%@ · API-equivalent": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "%@ · équivalent API"
+          }
+        }
+      }
+    },
+    "%@ · stale": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · périmé"
           }
         }
       }
@@ -269,66 +299,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "%1$@ – %2$@"
-          }
-        }
-      }
-    },
-    "%@%%": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ %%"
-          }
-        }
-      }
-    },
-    "%@%% / day": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ %% / jour"
-          }
-        }
-      }
-    },
-    "%@%% remaining": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ %% restant"
-          }
-        }
-      }
-    },
-    "%@%% used": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ %% utilisé"
-          }
-        }
-      }
-    },
-    "%@%% used · reported by Cursor": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ %% utilisé · selon Cursor"
-          }
-        }
-      }
-    },
-    "%@%% / day": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ %% / jour"
           }
         }
       }
@@ -371,6 +341,32 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@/mois"
+          }
+        }
+      }
+    },
+    "%@: %@ left": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@: %2$@ left"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ : %2$@ restant"
+          }
+        }
+      }
+    },
+    "%@ / day": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ / jour"
           }
         }
       }
@@ -503,26 +499,6 @@
         }
       }
     },
-    "%lld%%": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld %%"
-          }
-        }
-      }
-    },
-    "%lld%% · stale": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld %% · périmé"
-          }
-        }
-      }
-    },
     "%lldd": {
       "localizations": {
         "fr": {
@@ -569,22 +545,22 @@
         }
       }
     },
+    "+%@ ahead": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "+%@ d’avance"
+          }
+        }
+      }
+    },
     "+%@ pts ahead": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "+%@ pts d’avance"
-          }
-        }
-      }
-    },
-    "+%@%% ahead": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "+%@ %% d’avance"
           }
         }
       }
@@ -629,6 +605,16 @@
         }
       }
     },
+    "5-hour session %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Session de 5 h : %@"
+          }
+        }
+      }
+    },
     "<1h": {
       "localizations": {
         "fr": {
@@ -659,12 +645,12 @@
         }
       }
     },
-    "API pricing discount: %@%%": {
+    "API pricing discount: %@": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Remise vs prix API : %@ %%"
+            "value": "Remise vs prix API : %@"
           }
         }
       }
@@ -875,6 +861,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Agents"
+          }
+        }
+      }
+    },
+    "Alert when a quota runs low": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alerter quand un quota devient bas"
           }
         }
       }
@@ -1329,6 +1325,16 @@
         }
       }
     },
+    "Claude 5-hour session": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Session Claude de 5 h"
+          }
+        }
+      }
+    },
     "Claude Code sign-in expired.": {
       "localizations": {
         "fr": {
@@ -1345,6 +1351,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Les compteurs du compte Claude n’ont pas pu être enregistrés. Le dernier relevé est conservé."
+          }
+        }
+      }
+    },
+    "Claude limits are no longer updating": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les limites Claude ne se mettent plus à jour"
+          }
+        }
+      }
+    },
+    "Claude weekly limit": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Limite hebdo Claude"
           }
         }
       }
@@ -1395,6 +1421,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Réinitialisations de limite Codex utilisables maintenant."
+          }
+        }
+      }
+    },
+    "Codex weekly limit": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Limite hebdo Codex"
           }
         }
       }
@@ -1989,12 +2025,12 @@
         }
       }
     },
-    "Last successful update": {
+    "Last successful update %@ ago": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dernière mise à jour réussie"
+            "value": "Dernière mise à jour réussie il y a %@"
           }
         }
       }
@@ -2049,18 +2085,18 @@
         }
       }
     },
-    "Limit: %@ · %@%% used": {
+    "Limit: %@ · %@ used": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "new",
-            "value": "Limit: %1$@ · %2$@%% used"
+            "value": "Limit: %1$@ · %2$@ used"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Limite : %1$@ · %2$@ %% utilisé"
+            "value": "Limite : %1$@ · %2$@ utilisé"
           }
         }
       }
@@ -2451,6 +2487,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Non communiqué"
+          }
+        }
+      }
+    },
+    "Notifications": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notifications"
+          }
+        }
+      }
+    },
+    "Notifies once per window when the Codex or Claude weekly limit, or the Claude 5-hour session, falls to 20% or less, and when Claude limits stop updating. Alerts are sent while Agent Burn is open.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prévient une fois par fenêtre quand la limite hebdo Codex ou Claude, ou la session Claude de 5 h, descend à 20 % ou moins, et quand les limites Claude ne se mettent plus à jour. Les alertes sont envoyées tant qu’Agent Burn est ouvert."
           }
         }
       }
@@ -3045,6 +3101,16 @@
         }
       }
     },
+    "Resets in %@.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réinitialisation dans %@."
+          }
+        }
+      }
+    },
     "Room to keep building": {
       "localizations": {
         "fr": {
@@ -3581,22 +3647,22 @@
         }
       }
     },
-    "Updated": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mis à jour"
-          }
-        }
-      }
-    },
     "Updated %@": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "Mis à jour %@"
+          }
+        }
+      }
+    },
+    "Updated %@ ago": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mis à jour il y a %@"
           }
         }
       }
@@ -3851,16 +3917,6 @@
         }
       }
     },
-    "ago": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "plus tôt"
-          }
-        }
-      }
-    },
     "banked": {
       "localizations": {
         "fr": {
@@ -3971,22 +4027,22 @@
         }
       }
     },
+    "−%@ behind": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "−%@ de retard"
+          }
+        }
+      }
+    },
     "−%@ pts behind": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
             "value": "−%@ pts de retard"
-          }
-        }
-      }
-    },
-    "−%@%% behind": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "−%@ %% de retard"
           }
         }
       }

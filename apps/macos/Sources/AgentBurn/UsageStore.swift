@@ -56,6 +56,7 @@ final class UsageStore {
   var codexHomes: String { didSet { defaults.set(codexHomes, forKey: "codexHomes") } }
   var offline: Bool { didSet { defaults.set(offline, forKey: "offline") } }
   var refreshMinutes: Int { didSet { defaults.set(refreshMinutes, forKey: "refreshMinutes") } }
+  var quotaAlerts: Bool { didSet { defaults.set(quotaAlerts, forKey: "quotaAlerts") } }
   var quotaSource: QuotaSource {
     didSet { defaults.set(quotaSource.rawValue, forKey: "quotaSource") }
   }
@@ -105,6 +106,7 @@ final class UsageStore {
         home: FileManager.default.homeDirectoryForCurrentUser.path,
         inherited: ProcessInfo.processInfo.environment["CODEX_HOME"])
     offline = defaults.bool(forKey: "offline")
+    quotaAlerts = defaults.object(forKey: "quotaAlerts") as? Bool ?? true
     // A full report reparses every local log, so refresh it every 15 minutes unless chosen otherwise.
     let savedRefresh = defaults.integer(forKey: "refreshMinutes")
     refreshMinutes = savedRefresh > 0 ? savedRefresh : 15
@@ -235,6 +237,7 @@ final class UsageStore {
         errors["quotaService"] = nil
       }
       await refreshQuotasIfNeeded(backgroundAvailable: status == .enabled)
+      postQuotaAlerts()
       try? await Task.sleep(for: .seconds(5))
     }
   }
@@ -488,6 +491,45 @@ final class UsageStore {
     guard let forecast = forecast(for: agent) else { return nil }
     return quotaBlendRates(
       forecast: forecast, report: reports[agent], daily: archivedDaily(for: agent))
+  }
+
+  /// The 5-hour Claude session while its window is still running.
+  var claudeSessionRemaining: Double? {
+    claudeSessionRemainingPercent(
+      session: forecast(for: claudeSessionQuotaAgent), account: summary?.claudeAccount,
+      now: quotaCheckDate)
+  }
+
+  private func postQuotaAlerts() {
+    guard quotaAlerts, QuotaNotifier.isAvailable else { return }
+    let now = Date.now
+    var inputs: [QuotaAlertInput] = []
+    if let codex = forecast(for: "codex") {
+      inputs.append(
+        QuotaAlertInput(
+          key: "codex", title: String(localized: "Codex weekly limit"),
+          remaining: codex.remaining, reset: codex.reset))
+    }
+    let claude = forecast(for: "claude")
+    if let claude {
+      inputs.append(
+        QuotaAlertInput(
+          key: "claude", title: String(localized: "Claude weekly limit"),
+          remaining: claude.remaining, reset: claude.reset))
+    }
+    if let session = forecast(for: claudeSessionQuotaAgent) {
+      inputs.append(
+        QuotaAlertInput(
+          key: "claude-session", title: String(localized: "Claude 5-hour session"),
+          remaining: session.remaining, reset: session.reset))
+    }
+    let notifier = QuotaNotifier.shared
+    var alerts = quotaAlertsDue(inputs, sent: notifier.sent, now: now)
+    let lastClaude = claude.flatMap { $0.isLive ? $0.observedAt : nil }
+    if let stale = claudeStaleAlertDue(lastReading: lastClaude, sent: notifier.sent, now: now) {
+      alerts.append(stale)
+    }
+    notifier.post(alerts)
   }
 
   func forecast(for agent: String) -> Forecast? {

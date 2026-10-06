@@ -86,11 +86,13 @@ struct OverviewView: View {
         CardHeader(
           title: String(localized: "Quota remaining"), symbol: "gauge.with.dots.needle.67percent",
           tint: .green)
-        HStack(spacing: 8) {
+        // Equal-height tiles stay aligned when Claude adds its 5-hour session line.
+        HStack(alignment: .top, spacing: 8) {
           ForEach(quotas, id: \.0) { source, remaining in
             quotaTile(source, remaining: remaining)
           }
         }
+        .fixedSize(horizontal: false, vertical: true)
       }
       .burnCard(padding: 12, radius: 12)
     }
@@ -112,9 +114,17 @@ struct OverviewView: View {
           .contentTransition(.numericText())
           .animation(.snappy, value: remaining)
         ShareBar(value: remaining / 100, tint: tone, height: 4)
+        // The 5-hour session locks Claude out before the weekly limit does.
+        if source == .claude, let session = store.claudeSessionRemaining {
+          let sessionTone: Color =
+            session < 15 ? BurnTheme.behind : session < 35 ? .orange : BurnTheme.quotaMuted
+          Text("5-hour session \(percentText(session, digits: 0))")
+            .font(.system(size: 10, weight: .medium)).monospacedDigit()
+            .foregroundStyle(sessionTone)
+        }
       }
       .padding(9)
-      .frame(maxWidth: .infinity, alignment: .leading)
+      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
       .background(BurnTheme.hover, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
       .contentShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
     }
