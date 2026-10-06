@@ -388,7 +388,7 @@ private struct AboutSettings: View {
         Link(destination: URL(string: "https://agent-burn.melvynx.dev")!) {
           Label("Website", systemImage: "safari")
         }
-        Link(destination: URL(string: "https://github.com/Melvynx/agent-burn")!) {
+        Link(destination: URL(string: "https://github.com/AurelienRM/agent-burn")!) {
           Label("Source code", systemImage: "chevron.left.forwardslash.chevron.right")
         }
         Link(destination: URL(string: "https://agent-burn.melvynx.dev/docs")!) {

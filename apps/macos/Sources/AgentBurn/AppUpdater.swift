@@ -8,11 +8,12 @@ import SwiftUI
   @Published private(set) var canCheck = false
   private var observation: AnyCancellable?
 
+  /// Plain SwiftPM executables, render tests and fork builds have no update feed.
+  static let isConfigured = Bundle.main.object(forInfoDictionaryKey: "SUFeedURL") != nil
+
   private init() {
-    // Plain SwiftPM executables and render tests have no update configuration.
-    let configured = Bundle.main.object(forInfoDictionaryKey: "SUFeedURL") != nil
     controller = SPUStandardUpdaterController(
-      startingUpdater: configured, updaterDelegate: nil, userDriverDelegate: nil)
+      startingUpdater: Self.isConfigured, updaterDelegate: nil, userDriverDelegate: nil)
     observation = controller.updater.publisher(for: \.canCheckForUpdates)
       .receive(on: RunLoop.main)
       .sink { [weak self] in self?.canCheck = $0 }
@@ -30,6 +31,15 @@ struct UpdateSettings: View {
   @ObservedObject private var updater = AppUpdater.shared
   var body: some View {
     Section("App updates") {
+      if AppUpdater.isConfigured { controls } else {
+        Text("Automatic updates are off in this build. Pull the fork and rebuild to update.")
+          .font(.caption).foregroundStyle(.secondary)
+      }
+    }
+  }
+
+  @ViewBuilder private var controls: some View {
+    Group {
       Toggle(
         "Automatically check for updates",
         isOn: Binding(

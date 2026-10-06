@@ -39,7 +39,7 @@ trap 'trash "$staging"' EXIT
 app="$staging/Agent Burn.app"
 mkdir -p "$app/Contents/"{MacOS,Resources,Frameworks} dist
 mkdir -p "$app/Contents/Library/LaunchAgents"
-cp Config/dev.melvynx.agent-burn.quota.plist "$app/Contents/Library/LaunchAgents/"
+cp Config/dev.aurelienrm.agent-burn.quota.plist "$app/Contents/Library/LaunchAgents/"
 if [[ "$release" == 1 ]]; then
   lipo -create "$bin/AgentBurn" "$intel/AgentBurn" -output "$app/Contents/MacOS/AgentBurn"
   lipo -create ../../rust/target/{aarch64-apple-darwin,x86_64-apple-darwin}/release/agent-burn -output "$app/Contents/Resources/agent-burn"
@@ -60,7 +60,7 @@ cat > "$app/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-<key>CFBundleIdentifier</key><string>dev.melvynx.agent-burn</string>
+<key>CFBundleIdentifier</key><string>dev.aurelienrm.agent-burn</string>
 <key>CFBundleName</key><string>Agent Burn</string>
 <key>CFBundleDisplayName</key><string>Agent Burn</string>
 <key>CFBundleExecutable</key><string>AgentBurn</string>
@@ -72,11 +72,6 @@ cat > "$app/Contents/Info.plist" <<PLIST
 <key>LSApplicationCategoryType</key><string>public.app-category.developer-tools</string>
 <key>LSUIElement</key><false/>
 <key>NSHighResolutionCapable</key><true/>
-<key>SUFeedURL</key><string>https://agent-burn.melvynx.dev/appcast.xml</string>
-<key>SUPublicEDKey</key><string>$(tr -d '\n' < Config/sparkle-public-key)</string>
-<key>SUEnableAutomaticChecks</key><true/>
-<key>SUScheduledCheckInterval</key><integer>86400</integer>
-<key>SUSendProfileInfo</key><false/>
 </dict></plist>
 PLIST
 identity="${AGENT_BURN_SIGN_IDENTITY:--}"

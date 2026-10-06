@@ -2,7 +2,7 @@ import ServiceManagement
 import SwiftUI
 
 enum QuotaService {
-  static let plistName = "dev.melvynx.agent-burn.quota.plist"
+  static let plistName = "dev.aurelienrm.agent-burn.quota.plist"
   static var service: SMAppService { .agent(plistName: plistName) }
 
   /// Refresh the ServiceManagement registration so an app replacement never
