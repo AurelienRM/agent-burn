@@ -151,7 +151,7 @@ struct QuotaSummary: View {
         help: "\(style.resetHelp) \(quotaDateText(forecast.reset)).")
       row(
         String(localized: "Used"),
-        "\(quotaUsedPercent(forecast).formatted(.number.precision(.fractionLength(1))))%",
+        percentText(quotaUsedPercent(forecast), digits: 1),
         detail: String(localized: "since \(quotaDayLabel(forecast.start))"),
         help: style.usedHelp
       )
@@ -159,7 +159,7 @@ struct QuotaSummary: View {
         String(localized: "Daily"),
         String(
           localized:
-            "\(forecast.dailyAllowance.formatted(.number.precision(.fractionLength(1))))%\u{00A0}/ day"
+            "\(percentText(forecast.dailyAllowance, digits: 1))\u{00A0}/ day"
         ),
         help: String(localized: "Remaining quota divided by the time until reset."))
       if let dollars = quotaDollarsPerPercentLabel(rates?.dollarsPerPercent) {
@@ -352,7 +352,7 @@ struct HarnessSpendDetails: View {
               Text(category.label.capitalized).frame(maxWidth: .infinity, alignment: .leading)
               Text(tokens(category.tokens)).foregroundStyle(BurnTheme.muted).frame(
                 width: 85, alignment: .trailing)
-              Text("\(category.costPercent.formatted(.number.precision(.fractionLength(1))))%")
+              Text(percentText(category.costPercent, digits: 1))
                 .foregroundStyle(BurnTheme.muted).frame(width: 60, alignment: .trailing)
               Text(currency(category.costUSD)).frame(width: 90, alignment: .trailing)
             }.font(.system(size: 12)).monospacedDigit()
@@ -377,7 +377,7 @@ struct HarnessSpendDetails: View {
           detail(String(localized: "Monthly quota value"), currency(estimate.monthlyValue))
           detail(
             String(localized: "Projected quota consumption"),
-            "\(estimate.projectedUsePercent.formatted(.number.precision(.fractionLength(0))))%")
+            percentText(estimate.projectedUsePercent, digits: 0))
           if let multiple = estimate.valueMultiple {
             detail(
               String(localized: "Quota value / plan price"),

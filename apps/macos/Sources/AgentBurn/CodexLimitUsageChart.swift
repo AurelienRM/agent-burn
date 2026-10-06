@@ -184,6 +184,6 @@ struct CodexLimitUsageChart: View {
   }
 
   private func percentLabel(_ value: Double) -> String {
-    value.formatted(.number.precision(.fractionLength(value < 10 ? 1 : 0))) + "%"
+    percentText(value, digits: value < 10 ? 1 : 0)
   }
 }

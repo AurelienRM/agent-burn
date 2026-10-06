@@ -618,9 +618,9 @@ private func quotaChartDeltaPoints(samples: [QuotaSample], forecast: Forecast)
 func quotaChartDeltaText(_ delta: Double?) -> String? {
   guard let delta else { return nil }
   if abs(delta) < 0.05 { return String(localized: "On pace") }
-  let magnitude = abs(delta).formatted(.number.precision(.fractionLength(1)))
+  let magnitude = percentText(abs(delta), digits: 1)
   return delta > 0
-    ? String(localized: "+\(magnitude)% ahead") : String(localized: "−\(magnitude)% behind")
+    ? String(localized: "+\(magnitude) ahead") : String(localized: "−\(magnitude) behind")
 }
 
 func quotaChartStep(from date: Date, forward: Bool, marks: [Date], domain: ClosedRange<Date>)
@@ -639,7 +639,7 @@ func quotaChartCursorLabel(_ date: Date, range: QuotaChartRange) -> String {
 }
 
 func quotaChartPercentLabel(_ value: Double?) -> String {
-  value.map { "\($0.formatted(.number.precision(.fractionLength(1))))%" } ?? "—"
+  value.map { percentText($0, digits: 1) } ?? "—"
 }
 
 func quotaChartAxisLabel(
@@ -721,8 +721,8 @@ func quotaUsedPercent(_ forecast: Forecast) -> Double {
 }
 
 func quotaLimitSummary(_ forecast: Forecast) -> String {
-  let used = quotaUsedPercent(forecast).formatted(.number.precision(.fractionLength(0)))
-  return String(localized: "Limit: \(quotaDateText(forecast.start)) · \(used)% used")
+  let used = percentText(quotaUsedPercent(forecast), digits: 0)
+  return String(localized: "Limit: \(quotaDateText(forecast.start)) · \(used) used")
 }
 
 func quotaTimeLeft(_ forecast: Forecast, now: Date) -> String {
@@ -824,10 +824,9 @@ func quotaAvailableResetsLabel(_ count: Int?) -> String? {
 }
 
 func quotaCompactStats(_ forecast: Forecast, availableResets: Int? = nil) -> String {
-  let usedValue = quotaUsedPercent(forecast).formatted(.number.precision(.fractionLength(1)))
-  let used = String(localized: "\(usedValue)% used")
-  let dailyValue = forecast.dailyAllowance.formatted(.number.precision(.fractionLength(1)))
-  let daily = String(localized: "\(dailyValue)%\u{00A0}/ day")
+  let used = String(localized: "\(percentText(quotaUsedPercent(forecast), digits: 1)) used")
+  let daily = String(
+    localized: "\(percentText(forecast.dailyAllowance, digits: 1))\u{00A0}/ day")
   guard let resets = quotaAvailableResetsLabel(availableResets) else { return "\(used) · \(daily)" }
   return "\(used) · \(daily) · \(resets)"
 }
@@ -874,6 +873,17 @@ func remainingQuota(
     return (cursorAccount?.activePercentUsed ?? cursorAccount?.includedPercentUsed)
       .map { max(0, min(100, 100 - $0)) }
   }
+}
+
+/// The running 5-hour Claude window from the collected reading, else the report's meter.
+func claudeSessionRemainingPercent(session: Forecast?, account: ClaudeAccount?, now: Date)
+  -> Double?
+{
+  if let session, session.reset > now { return session.remaining }
+  guard let used = account?.sessionUsedPercent, let resetMs = account?.sessionResetsAtMs,
+    Date(timeIntervalSince1970: resetMs / 1000) > now
+  else { return nil }
+  return max(0, min(100, 100 - used))
 }
 
 func cursorHasPromotionalCredits(_ account: CursorAccount?) -> Bool {
@@ -972,7 +982,10 @@ private func cursorGrantUsedPercent(_ account: CursorAccount) -> Double? {
 }
 
 func menuBarQuotaText(_ remaining: Double?, stale: Bool = false) -> String {
-  remaining.map { stale ? String(localized: "\(Int($0))% · stale") : "\(Int($0))%" } ?? "Burn"
+  remaining.map {
+    let percent = percentText(Double(Int($0)), digits: 0)
+    return stale ? String(localized: "\(percent) · stale") : percent
+  } ?? "Burn"
 }
 
 func appVersionText(short: String, build: String = "") -> String {
@@ -1089,14 +1102,24 @@ func quotaTokensPerUnitLabel(_ value: Double?, unit: String) -> String? {
   return "\(tokens(UInt64(value.rounded()))) / \(unit)"
 }
 
+/// The narrow symbol keeps "$" in every locale instead of French "$US".
 func currency(_ value: Double) -> String {
-  value.formatted(.currency(code: "USD").precision(.fractionLength(2)))
+  value.formatted(.currency(code: "USD").presentation(.narrow).precision(.fractionLength(2)))
 }
 
+/// Compact counts in the reader's locale: "10.07B" in English, "10,07 Md" in French.
 func tokens(_ value: UInt64) -> String {
   let number = Double(value)
-  if number >= 1_000_000_000 { return String(format: "%.2fB", number / 1_000_000_000) }
-  if number >= 1_000_000 { return String(format: "%.1fM", number / 1_000_000) }
-  if number >= 1000 { return String(format: "%.1fK", number / 1000) }
-  return value.formatted()
+  guard number >= 1000 else { return value.formatted() }
+  let digits = number >= 1_000_000_000 ? 2 : 1
+  return number.formatted(.number.notation(.compactName).precision(.fractionLength(digits)))
+}
+
+/// A percentage written the reader's way: "65.0%" in English, "65,0 %" in French.
+func percentText(_ value: Double, digits: ClosedRange<Int>) -> String {
+  (value / 100).formatted(.percent.precision(.fractionLength(digits)))
+}
+
+func percentText(_ value: Double, digits: Int) -> String {
+  percentText(value, digits: digits...digits)
 }

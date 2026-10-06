@@ -119,9 +119,11 @@ struct RefreshFooter: View {
       Circle().fill(store.errors[source] == nil ? BurnTheme.green : BurnTheme.accent).frame(
         width: 5, height: 5)
       if let date = store.updated[source] {
-        Text(store.errors[source] == nil ? "Updated" : "Last successful update")
-        Text(date, style: .relative)
-        Text("ago")
+        // One sentence so each language can place the live duration ("il y a 3 s").
+        let elapsed = Text(date, style: .relative)
+        Text(
+          store.errors[source] == nil
+            ? "Updated \(elapsed) ago" : "Last successful update \(elapsed) ago")
       } else if source == "summary", store.summary != nil {
         Text("Saved usage")
       } else if store.isLoading {

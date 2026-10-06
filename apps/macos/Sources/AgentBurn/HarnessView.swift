@@ -55,7 +55,7 @@ struct HarnessView: View {
             Text("API-equivalent minus plan: \(currency(economics.subsidyPerMonth))")
             Spacer()
             Text(
-              "API pricing discount: \(economics.discountPercent.formatted(.number.precision(.fractionLength(1))))%"
+              "API pricing discount: \(percentText(economics.discountPercent, digits: 1))"
             )
           }.font(.system(size: 11)).foregroundStyle(BurnTheme.muted)
         }
@@ -86,7 +86,7 @@ struct HarnessView: View {
             Text("\(short.label) limit").foregroundStyle(BurnTheme.muted)
             Spacer()
             Text(
-              "\(max(0, 100 - short.usedPercent).formatted(.number.precision(.fractionLength(0))))% remaining"
+              "\(percentText(max(0, 100 - short.usedPercent), digits: 0)) remaining"
             )
           }.font(.system(size: 12))
         }
@@ -176,7 +176,7 @@ struct HarnessView: View {
       HStack {
         Label("Suggested pace", systemImage: "speedometer").foregroundStyle(BurnTheme.muted)
         Spacer()
-        Text("\(forecast.dailyAllowance.formatted(.number.precision(.fractionLength(1))))% / day")
+        Text("\(percentText(forecast.dailyAllowance, digits: 1)) / day")
           .foregroundStyle(color)
       }
     }

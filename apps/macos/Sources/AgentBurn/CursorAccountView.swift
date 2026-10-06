@@ -130,7 +130,7 @@ struct CursorAccountView: View {
         if let used = account.includedPercentUsed {
           ShareBar(value: used / 100, tint: .purple, height: 6)
           Text(
-            "\(used.formatted(.number.precision(.fractionLength(1))))% used · reported by Cursor"
+            "\(percentText(used, digits: 1)) used · reported by Cursor"
           )
           .font(.caption).foregroundStyle(.secondary)
         }
@@ -170,7 +170,7 @@ struct CursorAccountView: View {
             .font(.caption).foregroundStyle(.secondary)
           if let used = grantUsedPercent(grant) {
             ShareBar(value: used / 100, tint: .purple, height: 6)
-            Text("\(used.formatted(.number.precision(.fractionLength(1))))% used")
+            Text("\(percentText(used, digits: 1)) used")
               .font(.caption).foregroundStyle(.secondary)
           }
         }

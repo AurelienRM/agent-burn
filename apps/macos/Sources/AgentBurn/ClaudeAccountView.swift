@@ -219,7 +219,7 @@ private func claudeRunOutVerdict(_ forecast: Forecast, name: String, now: Date) 
 }
 
 private func quotaRateText(_ value: Double) -> String {
-  value.formatted(.number.precision(.fractionLength(0...1))) + "%"
+  percentText(value, digits: 0...1)
 }
 
 struct ClaudeVerdictBanner: View {

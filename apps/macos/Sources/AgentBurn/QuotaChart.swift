@@ -92,7 +92,7 @@ struct QuotaChart: View {
         .foregroundStyle(isBaseline ? BurnTheme.grid : BurnTheme.line)
         AxisValueLabel {
           if let number = value.as(Int.self) {
-            Text("\(number)%").foregroundStyle(muted).monospacedDigit()
+            Text(percentText(Double(number), digits: 0)).foregroundStyle(muted).monospacedDigit()
           }
         }
       }
@@ -141,14 +141,21 @@ struct QuotaChart: View {
     )
     .foregroundStyle(quotaLockoutHatch())
     .annotation(position: .overlay, alignment: .center) {
-      VStack(spacing: 2) {
-        Text("Locked out").font(.system(size: 11, weight: .semibold))
-        Text(quotaDurationLabel(forecast.reset.timeIntervalSince(forecast.projectedEnd)))
-          .font(.system(size: 10.5)).monospacedDigit()
+      // A narrow band cannot hold its label; the run-out label already names the time.
+      if forecast.reset.timeIntervalSince(forecast.projectedEnd) >= forecast.duration * 0.2 {
+        lockoutLabel
       }
-      .foregroundStyle(BurnTheme.behind)
-      .fixedSize()
     }
+  }
+
+  private var lockoutLabel: some View {
+    VStack(spacing: 2) {
+      Text("Locked out").font(.system(size: 11, weight: .semibold))
+      Text(quotaDurationLabel(forecast.reset.timeIntervalSince(forecast.projectedEnd)))
+        .font(.system(size: 10.5)).monospacedDigit()
+    }
+    .foregroundStyle(BurnTheme.behind)
+    .fixedSize()
   }
 
   /// Names the dashed pace line on the side the recorded line leaves free. The line
@@ -194,6 +201,10 @@ struct QuotaChart: View {
       .font(.system(size: 11, weight: .semibold)).monospacedDigit()
       .foregroundStyle(stroke)
       .fixedSize()
+      // The forecast often ends where the recorded line runs flat; a backing
+      // keeps the label readable over it.
+      .padding(.horizontal, 5).padding(.vertical, 2)
+      .background(.background.opacity(0.85), in: Capsule())
     }
   }
 
@@ -384,8 +395,8 @@ struct QuotaChart: View {
     guard let delta else { return nil }
     if compact {
       if abs(delta) < 0.05 { return String(localized: "pace") }
-      let magnitude = abs(delta).formatted(.number.precision(.fractionLength(1)))
-      return delta > 0 ? "+\(magnitude)%" : "−\(magnitude)%"
+      let magnitude = percentText(abs(delta), digits: 1)
+      return delta > 0 ? "+\(magnitude)" : "−\(magnitude)"
     }
     return quotaChartDeltaText(delta)
   }
@@ -513,7 +524,7 @@ func quotaChartPaceLabelDate(forecast: Forecast) -> Date {
 
 /// Whole percentages stay whole ("90%"); anything else keeps one decimal ("96.5%").
 func quotaPercentText(_ value: Double) -> String {
-  value.formatted(.number.precision(.fractionLength(0...1))) + "%"
+  percentText(value, digits: 0...1)
 }
 
 /// "2h 22m", "45m", or "1d 4h" for spans longer than a day.

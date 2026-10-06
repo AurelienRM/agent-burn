@@ -34,11 +34,10 @@ struct CompactHarnessView: View {
           if let short = store.summary?.subscription?.agents.first(where: { $0.agent == agent })?
             .shortWindow
           {
-            let remaining = max(0, 100 - short.usedPercent)
-              .formatted(.number.precision(.fractionLength(0)))
+            let remaining = percentText(max(0, 100 - short.usedPercent), digits: 0)
             detail(
               String(localized: "\(short.label) limit"),
-              String(localized: "\(remaining)% remaining"))
+              String(localized: "\(remaining) remaining"))
           }
         }
         .burnCard(padding: 14, radius: 12)
@@ -75,10 +74,10 @@ struct CompactHarnessView: View {
               detail(String(localized: "Monthly plan"), currency(price))
             }
             if let forecast = store.forecast(for: agent) {
-              let daily = forecast.dailyAllowance.formatted(.number.precision(.fractionLength(1)))
+              let daily = percentText(forecast.dailyAllowance, digits: 1)
               detail(
                 String(localized: "Suggested daily pace"),
-                String(localized: "\(daily)%\u{00A0}/ day"))
+                String(localized: "\(daily)\u{00A0}/ day"))
             }
             if let dollars = quotaDollarsPerPercentLabel(rates?.dollarsPerPercent) {
               detail(String(localized: "Avg $ / %"), dollars)
