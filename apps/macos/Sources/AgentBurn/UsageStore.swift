@@ -105,7 +105,9 @@ final class UsageStore {
         home: FileManager.default.homeDirectoryForCurrentUser.path,
         inherited: ProcessInfo.processInfo.environment["CODEX_HOME"])
     offline = defaults.bool(forKey: "offline")
-    refreshMinutes = max(1, defaults.integer(forKey: "refreshMinutes"))
+    // A full report reparses every local log, so refresh it every 15 minutes unless chosen otherwise.
+    let savedRefresh = defaults.integer(forKey: "refreshMinutes")
+    refreshMinutes = savedRefresh > 0 ? savedRefresh : 15
     quotaSource = QuotaSource(rawValue: defaults.string(forKey: "quotaSource") ?? "") ?? .codex
     quotaChartRange =
       QuotaChartRange(rawValue: defaults.string(forKey: "quotaChartRange") ?? "") ?? .rte

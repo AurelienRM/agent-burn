@@ -154,14 +154,14 @@ import Testing
   #expect(store.summary?.totals.totalCost == 10)
 }
 
-@Test @MainActor func reportsDefaultToAMinuteWithoutOverridingSavedIntervals() throws {
+@Test @MainActor func reportsDefaultToFifteenMinutesWithoutOverridingSavedIntervals() throws {
   let fixture = try PeriodFixture()
   defer { fixture.cleanUp() }
   #expect(
-    UsageStore(defaults: fixture.defaults, storageDirectory: fixture.folder).refreshMinutes == 1)
-  fixture.defaults.set(15, forKey: "refreshMinutes")
-  #expect(
     UsageStore(defaults: fixture.defaults, storageDirectory: fixture.folder).refreshMinutes == 15)
+  fixture.defaults.set(1, forKey: "refreshMinutes")
+  #expect(
+    UsageStore(defaults: fixture.defaults, storageDirectory: fixture.folder).refreshMinutes == 1)
 }
 
 @Test @MainActor func periodChangesKeepTheLatestCursorAccount() async throws {
