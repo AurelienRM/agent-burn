@@ -9,43 +9,23 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as NpmRouteImport } from './routes/npm'
-import { Route as LlmsDottxtRouteImport } from './routes/llms[.]txt'
-import { Route as LlmsFullDottxtRouteImport } from './routes/llms-full[.]txt'
-import { Route as GhRouteImport } from './routes/gh'
-import { Route as DownloadRouteImport } from './routes/download'
-import { Route as AppcastDotxmlRouteImport } from './routes/appcast[.]xml'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as GuideIndexRouteImport } from './routes/guide/index'
-import { Route as DocsIndexRouteImport } from './routes/docs/index'
-import { Route as GuideSplatRouteImport } from './routes/guide/$'
-import { Route as DocsChar123Char125DotmdRouteImport } from './routes/docs/{$}[.]md'
-import { Route as DocsSplatRouteImport } from './routes/docs/$'
+import { Route as AppcastDotxmlRouteImport } from './routes/appcast[.]xml'
+import { Route as DownloadRouteImport } from './routes/download'
+import { Route as GhRouteImport } from './routes/gh'
+import { Route as LlmsFullDottxtRouteImport } from './routes/llms-full[.]txt'
+import { Route as LlmsDottxtRouteImport } from './routes/llms[.]txt'
+import { Route as NpmRouteImport } from './routes/npm'
 import { Route as ApiSearchRouteImport } from './routes/api/search'
+import { Route as DocsIndexRouteImport } from './routes/docs/index'
+import { Route as DocsSplatRouteImport } from './routes/docs/$'
+import { Route as DocsChar123Char125DotmdRouteImport } from './routes/docs/{$}[.]md'
+import { Route as GuideIndexRouteImport } from './routes/guide/index'
+import { Route as GuideSplatRouteImport } from './routes/guide/$'
 
-const NpmRoute = NpmRouteImport.update({
-  id: '/npm',
-  path: '/npm',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LlmsDottxtRoute = LlmsDottxtRouteImport.update({
-  id: '/llms.txt',
-  path: '/llms.txt',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LlmsFullDottxtRoute = LlmsFullDottxtRouteImport.update({
-  id: '/llms-full.txt',
-  path: '/llms-full.txt',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GhRoute = GhRouteImport.update({
-  id: '/gh',
-  path: '/gh',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DownloadRoute = DownloadRouteImport.update({
-  id: '/download',
-  path: '/download',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppcastDotxmlRoute = AppcastDotxmlRouteImport.update({
@@ -53,14 +33,34 @@ const AppcastDotxmlRoute = AppcastDotxmlRouteImport.update({
   path: '/appcast.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const DownloadRoute = DownloadRouteImport.update({
+  id: '/download',
+  path: '/download',
   getParentRoute: () => rootRouteImport,
 } as any)
-const GuideIndexRoute = GuideIndexRouteImport.update({
-  id: '/guide/',
-  path: '/guide/',
+const GhRoute = GhRouteImport.update({
+  id: '/gh',
+  path: '/gh',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LlmsFullDottxtRoute = LlmsFullDottxtRouteImport.update({
+  id: '/llms-full.txt',
+  path: '/llms-full.txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LlmsDottxtRoute = LlmsDottxtRouteImport.update({
+  id: '/llms.txt',
+  path: '/llms.txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NpmRoute = NpmRouteImport.update({
+  id: '/npm',
+  path: '/npm',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSearchRoute = ApiSearchRouteImport.update({
+  id: '/api/search',
+  path: '/api/search',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DocsIndexRoute = DocsIndexRouteImport.update({
@@ -68,9 +68,9 @@ const DocsIndexRoute = DocsIndexRouteImport.update({
   path: '/docs/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const GuideSplatRoute = GuideSplatRouteImport.update({
-  id: '/guide/$',
-  path: '/guide/$',
+const DocsSplatRoute = DocsSplatRouteImport.update({
+  id: '/docs/$',
+  path: '/docs/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DocsChar123Char125DotmdRoute = DocsChar123Char125DotmdRouteImport.update({
@@ -78,14 +78,14 @@ const DocsChar123Char125DotmdRoute = DocsChar123Char125DotmdRouteImport.update({
   path: '/docs/{$}.md',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DocsSplatRoute = DocsSplatRouteImport.update({
-  id: '/docs/$',
-  path: '/docs/$',
+const GuideIndexRoute = GuideIndexRouteImport.update({
+  id: '/guide/',
+  path: '/guide/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiSearchRoute = ApiSearchRouteImport.update({
-  id: '/api/search',
-  path: '/api/search',
+const GuideSplatRoute = GuideSplatRouteImport.update({
+  id: '/guide/$',
+  path: '/guide/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -201,39 +201,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/npm': {
-      id: '/npm'
-      path: '/npm'
-      fullPath: '/npm'
-      preLoaderRoute: typeof NpmRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/llms.txt': {
-      id: '/llms.txt'
-      path: '/llms.txt'
-      fullPath: '/llms.txt'
-      preLoaderRoute: typeof LlmsDottxtRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/llms-full.txt': {
-      id: '/llms-full.txt'
-      path: '/llms-full.txt'
-      fullPath: '/llms-full.txt'
-      preLoaderRoute: typeof LlmsFullDottxtRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/gh': {
-      id: '/gh'
-      path: '/gh'
-      fullPath: '/gh'
-      preLoaderRoute: typeof GhRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/download': {
-      id: '/download'
-      path: '/download'
-      fullPath: '/download'
-      preLoaderRoute: typeof DownloadRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/appcast.xml': {
@@ -243,18 +215,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppcastDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/download': {
+      id: '/download'
+      path: '/download'
+      fullPath: '/download'
+      preLoaderRoute: typeof DownloadRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/guide/': {
-      id: '/guide/'
-      path: '/guide'
-      fullPath: '/guide/'
-      preLoaderRoute: typeof GuideIndexRouteImport
+    '/gh': {
+      id: '/gh'
+      path: '/gh'
+      fullPath: '/gh'
+      preLoaderRoute: typeof GhRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/llms-full.txt': {
+      id: '/llms-full.txt'
+      path: '/llms-full.txt'
+      fullPath: '/llms-full.txt'
+      preLoaderRoute: typeof LlmsFullDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/llms.txt': {
+      id: '/llms.txt'
+      path: '/llms.txt'
+      fullPath: '/llms.txt'
+      preLoaderRoute: typeof LlmsDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/npm': {
+      id: '/npm'
+      path: '/npm'
+      fullPath: '/npm'
+      preLoaderRoute: typeof NpmRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/search': {
+      id: '/api/search'
+      path: '/api/search'
+      fullPath: '/api/search'
+      preLoaderRoute: typeof ApiSearchRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/docs/': {
@@ -264,11 +264,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DocsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/guide/$': {
-      id: '/guide/$'
-      path: '/guide/$'
-      fullPath: '/guide/$'
-      preLoaderRoute: typeof GuideSplatRouteImport
+    '/docs/$': {
+      id: '/docs/$'
+      path: '/docs/$'
+      fullPath: '/docs/$'
+      preLoaderRoute: typeof DocsSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/docs/{$}.md': {
@@ -278,18 +278,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DocsChar123Char125DotmdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/docs/$': {
-      id: '/docs/$'
-      path: '/docs/$'
-      fullPath: '/docs/$'
-      preLoaderRoute: typeof DocsSplatRouteImport
+    '/guide/': {
+      id: '/guide/'
+      path: '/guide'
+      fullPath: '/guide/'
+      preLoaderRoute: typeof GuideIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/search': {
-      id: '/api/search'
-      path: '/api/search'
-      fullPath: '/api/search'
-      preLoaderRoute: typeof ApiSearchRouteImport
+    '/guide/$': {
+      id: '/guide/$'
+      path: '/guide/$'
+      fullPath: '/guide/$'
+      preLoaderRoute: typeof GuideSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
