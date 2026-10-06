@@ -271,7 +271,8 @@ func spendBucketTooltip(
 ) -> String {
   switch granularity {
   case .daily:
-    return quotaDayKey(start) + " · " + currency(cost)
+    return start.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated)) + " · "
+      + currency(cost)
   case .weekly:
     let end = calendar.date(byAdding: .day, value: 6, to: start) ?? start
     let label =
@@ -702,6 +703,12 @@ struct QuotaDeltaSegment: Equatable {
 
 func quotaDateText(_ date: Date) -> String {
   date.formatted(.dateTime.month(.abbreviated).day().hour().minute())
+}
+
+/// A period shown to the reader: "30 Jul 2026 – 6 Oct 2026", or "30 juil. 2026 – 6 oct. 2026".
+func usageRangeLabel(_ start: Date, _ end: Date) -> String {
+  let style = Date.FormatStyle.dateTime.day().month(.abbreviated).year()
+  return start.formatted(style) + " – " + end.formatted(style)
 }
 
 func quotaDayLabel(_ date: Date) -> String {

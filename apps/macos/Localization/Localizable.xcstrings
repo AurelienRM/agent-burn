@@ -287,22 +287,6 @@
         }
       }
     },
-    "%@ – %@": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "%1$@ – %2$@"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$@ – %2$@"
-          }
-        }
-      }
-    },
     "%@, %@, %@ tokens": {
       "localizations": {
         "en": {
@@ -3261,18 +3245,12 @@
         }
       }
     },
-    "Snapshot: %@ – %@. Current-cycle model data is shown above.": {
+    "Snapshot: %@. Current-cycle model data is shown above.": {
       "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "Snapshot: %1$@ – %2$@. Current-cycle model data is shown above."
-          }
-        },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Instantané : %1$@ – %2$@. Les données du cycle en cours sont affichées au-dessus."
+            "value": "Instantané : %@. Les données du cycle en cours sont affichées au-dessus."
           }
         }
       }

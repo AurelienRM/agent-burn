@@ -57,9 +57,10 @@ struct NativeUsageView: View {
         {
           DisclosureGroup("Recovered model history · \(models.count) models") {
             VStack(alignment: .leading, spacing: 10) {
-              Text(
-                "Snapshot: \(recovered.daily?.first?.date ?? "") – \(recovered.daily?.last?.date ?? ""). Current-cycle model data is shown above."
-              )
+              let first = recovered.daily?.first.flatMap { usageDayDate($0.date) }
+              let last = recovered.daily?.last.flatMap { usageDayDate($0.date) }
+              let range = first.flatMap { first in last.map { usageRangeLabel(first, $0) } } ?? ""
+              Text("Snapshot: \(range). Current-cycle model data is shown above.")
               .font(.caption).foregroundStyle(.secondary)
               ModelUsageTable(models: models, total: recovered.totalCost).frame(height: 280)
             }.padding(.top, 12)
@@ -132,7 +133,7 @@ struct NativeUsageView: View {
           )
           Spacer()
           if let domain = store.chartDomain {
-            Text("\(quotaDayKey(domain.lowerBound)) – \(quotaDayKey(domain.upperBound))")
+            Text(usageRangeLabel(domain.lowerBound, domain.upperBound))
           }
         }.font(.caption).foregroundStyle(.secondary)
       } else {
@@ -325,7 +326,8 @@ struct NativeUsageView: View {
           total: agent == "cursor" && !hasCursorCredits && cursorScope == .cursorModels
             ? models.reduce(0) { $0 + $1.totalCost } : cost
         )
-        .frame(height: CGFloat(min(9, max(3, models.count))) * 24 + 36)
+        // Fit typical model lists whole; only very long ones scroll inside the card.
+        .frame(height: CGFloat(min(15, max(3, models.count))) * 24 + 44)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
       }
     }
