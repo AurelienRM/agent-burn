@@ -1,5 +1,8 @@
+mod claude_code;
+mod credentials;
 mod daily;
 mod limits;
+mod oauth_refresh;
 mod paths;
 mod plan;
 mod usage_cache;

@@ -1,9 +1,14 @@
-use std::{fs, time::Duration};
+use std::{env, time::Duration};
 
 use serde_json::{Value, json};
 
-use super::usage_cache::{self, UsageCache};
-use crate::{TimestampMs, home, parse_ts_timestamp, utc_now};
+use super::{
+    claude_code,
+    credentials::{Credentials, OAuthToken},
+    oauth_refresh,
+    usage_cache::{self, UsageCache},
+};
+use crate::{TimestampMs, parse_ts_timestamp, utc_now};
 
 const USAGE_URL: &str = "https://api.anthropic.com/api/oauth/usage";
 const FETCH_TIMEOUT_SECONDS: u64 = 5;
@@ -55,12 +60,12 @@ pub(crate) fn usage_limits(offline: bool) -> Option<ClaudeUsageLimits> {
 /// Limits for the quota collector, stamped with when Anthropic reported them
 /// so a shared cached reading is never recorded as a newer observation.
 pub(crate) fn live_usage_limits(offline: bool) -> Option<(ClaudeUsageLimits, TimestampMs)> {
-    let (body, observed_at) = usage_body(offline, usage_cache::FRESH_MS).body?;
+    let (body, observed_at) = usage_body(offline, usage_cache::LIVE_MS).body?;
     Some((parse_usage_limits(&body)?, observed_at))
 }
 
 /// A usage body with when Anthropic reported it, and whether Claude Code's
-/// sign-in has lapsed so the meters cannot update until `claude` runs again.
+/// sign-in lapsed and Anthropic refused to renew it.
 #[derive(Debug, Default)]
 struct Usage {
     body: Option<(String, TimestampMs)>,
@@ -73,49 +78,108 @@ fn usage_body(offline: bool, max_age_ms: i64) -> Usage {
     }
     resolve_usage(
         &mut UsageCache::load(),
-        utc_now(),
-        max_age_ms,
-        oauth_token,
-        fetch_usage_body,
+        Request {
+            now: utc_now(),
+            max_age_ms,
+            force: env::var("AGENT_BURN_FORCE_REFRESH").as_deref() == Ok("1"),
+        },
+        Sources {
+            token: || Credentials::load()?.token(),
+            fetch: fetch_usage_body,
+            claude_code: claude_code::cached_usage,
+            renew: oauth_refresh::renew,
+        },
     )
 }
 
-fn resolve_usage(
-    cache: &mut UsageCache,
+#[derive(Clone, Copy)]
+struct Request {
     now: TimestampMs,
     max_age_ms: i64,
-    token: impl FnOnce() -> Option<OAuthToken>,
-    fetch: impl FnOnce(&str) -> Fetch,
-) -> Usage {
+    /// A hard refresh: skip the shared fresh reading and ask Anthropic again.
+    force: bool,
+}
+
+struct Sources<T, F, C, R> {
+    token: T,
+    fetch: F,
+    /// The reading Claude Code cached for itself, which needs no request.
+    claude_code: C,
+    /// Renews the sign-in through Claude Code's refresh protocol; `true`
+    /// renews a token Anthropic rejected before its expiry.
+    renew: R,
+}
+
+/// Every source is tried before a report goes without meters: the shared
+/// reading, Claude Code's own cache, then the OAuth endpoint with a sign-in
+/// renewed when it expired or was rejected. The newest reading always wins.
+fn resolve_usage<T, F, C, R>(
+    cache: &mut UsageCache,
+    Request {
+        now,
+        max_age_ms,
+        force,
+    }: Request,
+    Sources {
+        token,
+        mut fetch,
+        claude_code,
+        mut renew,
+    }: Sources<T, F, C, R>,
+) -> Usage
+where
+    T: FnOnce() -> Option<OAuthToken>,
+    F: FnMut(&str) -> Fetch,
+    C: Fn() -> Option<(String, TimestampMs)>,
+    R: FnMut(&OAuthToken, bool) -> Option<OAuthToken>,
+{
     let cached = |cache: &UsageCache, max_age_ms| {
         cache
             .body_within(now, max_age_ms)
             .map(|(body, fetched_at)| (body.to_string(), fetched_at))
     };
-    if let Some(body) = cached(cache, usage_cache::FRESH_MS) {
+    cache.adopt(claude_code(), now);
+    if !force && let Some(body) = cached(cache, usage_cache::FRESH_MS) {
         return Usage {
             body: Some(body),
             sign_in_expired: false,
         };
     }
     let mut sign_in_expired = false;
-    match token() {
+    if let Some(token) = token()
+        && !cache.is_blocked(now)
+    {
+        let mut renew = |cache: &mut UsageCache, token: &OAuthToken, rejected: bool| {
+            if !cache.renew_due(now, force) {
+                return None;
+            }
+            let renewed = renew(token, rejected);
+            cache.store_renewal(renewed.is_some(), now);
+            renewed
+        };
         // Anthropic answers an expired token with a 429 and an hour-long
-        // Retry-After, so sending it would also block the refreshed token.
-        Some(token) if token.is_expired(now) => sign_in_expired = true,
-        Some(token) if !cache.is_blocked(now) => match fetch(&token.access_token) {
-            Fetch::Body(body) => {
+        // Retry-After, so an expired token is renewed and never sent.
+        let token = if token.is_expired(now) {
+            renew(cache, &token, false)
+        } else {
+            Some(token)
+        };
+        let mut attempt = token.map(|token| (fetch(&token.access_token), token));
+        if let Some((Fetch::Unauthorized, token)) = &attempt {
+            attempt = renew(cache, token, true).map(|token| (fetch(&token.access_token), token));
+        }
+        match attempt.map(|(fetch, _)| fetch) {
+            Some(Fetch::Body(body)) => {
                 cache.store_body(body.clone(), now);
                 return Usage {
                     body: Some((body, now)),
                     sign_in_expired: false,
                 };
             }
-            Fetch::RateLimited(retry_after) => cache.store_rate_limit(retry_after, now),
-            Fetch::Unauthorized => sign_in_expired = true,
-            Fetch::Failed => {}
-        },
-        _ => {}
+            Some(Fetch::RateLimited(retry_after)) => cache.store_rate_limit(retry_after, now),
+            Some(Fetch::Failed) => {}
+            Some(Fetch::Unauthorized) | None => sign_in_expired = true,
+        }
     }
     Usage {
         body: cached(cache, max_age_ms),
@@ -127,7 +191,7 @@ fn resolve_usage(
 pub(crate) struct AccountLoad {
     /// Latest meters, omitted when offline or when nothing usable is cached.
     pub(crate) account: Option<Value>,
-    /// Claude Code's token has expired; only running `claude` refreshes it.
+    /// Claude Code's sign-in expired and Anthropic refused to renew it.
     pub(crate) sign_in_expired: bool,
 }
 
@@ -146,62 +210,6 @@ pub(crate) fn load_account(offline: bool) -> AccountLoad {
         account,
         sign_in_expired: usage.sign_in_expired,
     }
-}
-
-/// Claude Code's OAuth access token. Only the `claude` CLI refreshes it.
-#[derive(Debug, PartialEq)]
-struct OAuthToken {
-    access_token: String,
-    expires_at: Option<TimestampMs>,
-}
-
-impl OAuthToken {
-    fn is_expired(&self, now: TimestampMs) -> bool {
-        self.expires_at.is_some_and(|expires_at| now >= expires_at)
-    }
-}
-
-fn oauth_token() -> Option<OAuthToken> {
-    #[cfg(target_os = "macos")]
-    if let Some(token) = keychain_token() {
-        return Some(token);
-    }
-    file_token()
-}
-
-#[cfg(target_os = "macos")]
-fn keychain_token() -> Option<OAuthToken> {
-    let output = std::process::Command::new("security")
-        .args([
-            "find-generic-password",
-            "-s",
-            "Claude Code-credentials",
-            "-w",
-        ])
-        .output()
-        .ok()?;
-    if !output.status.success() {
-        return None;
-    }
-    let json = String::from_utf8(output.stdout).ok()?;
-    token_from_credentials(&json)
-}
-
-fn file_token() -> Option<OAuthToken> {
-    let path = home::home_dir()?.join(".claude").join(".credentials.json");
-    token_from_credentials(&fs::read_to_string(path).ok()?)
-}
-
-fn token_from_credentials(json: &str) -> Option<OAuthToken> {
-    let value = serde_json::from_str::<Value>(json.trim()).ok()?;
-    let oauth = value.get("claudeAiOauth")?;
-    Some(OAuthToken {
-        access_token: oauth.get("accessToken")?.as_str()?.to_string(),
-        expires_at: oauth
-            .get("expiresAt")
-            .and_then(Value::as_i64)
-            .map(TimestampMs::from_millis),
-    })
 }
 
 enum Fetch {
@@ -592,84 +600,190 @@ mod tests {
         assert_eq!(account["extraUsedPercent"], 2.5);
     }
 
-    #[test]
-    fn reads_access_token_and_expiry_from_credentials_json() {
-        let json = r#"{"claudeAiOauth":{"accessToken":"sk-ant-oat-abc","refreshToken":"r","expiresAt":1800000000000}}"#;
-        let token = token_from_credentials(json).unwrap();
-        assert_eq!(token.access_token, "sk-ant-oat-abc");
-        let expires_at = TimestampMs::from_millis(1_800_000_000_000);
-        assert!(!token.is_expired(expires_at.checked_sub_millis(1).unwrap()));
-        assert!(token.is_expired(expires_at));
-
-        let without_expiry =
-            token_from_credentials(r#"{"claudeAiOauth":{"accessToken":"sk"}}"#).unwrap();
-        assert!(!without_expiry.is_expired(expires_at));
-    }
-
     fn stale_cache(now: TimestampMs) -> UsageCache {
         UsageCache {
             fetched_at: now.checked_sub_millis(5 * 60_000),
             body: Some(r#"{"five_hour":null}"#.into()),
-            blocked_until: None,
+            ..UsageCache::default()
+        }
+    }
+
+    fn signed_in(access_token: &str, expires_at: Option<TimestampMs>) -> OAuthToken {
+        OAuthToken {
+            access_token: access_token.into(),
+            expires_at,
+            refresh_token: Some("refresh".into()),
+            scopes: Vec::new(),
+            client_id: None,
         }
     }
 
     fn token(expires_at: Option<TimestampMs>) -> Option<OAuthToken> {
-        Some(OAuthToken {
-            access_token: "sk-ant-oat".into(),
-            expires_at,
-        })
+        Some(signed_in("sk-ant-oat", expires_at))
+    }
+
+    fn request(now: TimestampMs, max_age_ms: i64) -> Request {
+        Request {
+            now,
+            max_age_ms,
+            force: false,
+        }
+    }
+
+    fn no_claude_code() -> Option<(String, TimestampMs)> {
+        None
+    }
+
+    fn refused(_: &OAuthToken, _: bool) -> Option<OAuthToken> {
+        None
+    }
+
+    fn no_renewal(_: &OAuthToken, _: bool) -> Option<OAuthToken> {
+        panic!("the sign-in must not be renewed")
+    }
+
+    fn at(seconds: i64) -> TimestampMs {
+        TimestampMs::from_unix_seconds(1_800_000_000 + seconds).unwrap()
+    }
+
+    const BODY: &str = r#"{"five_hour":{"utilization":7}}"#;
+
+    #[test]
+    fn renews_an_expired_sign_in_instead_of_sending_it() {
+        let now = at(0);
+        let mut cache = stale_cache(now);
+        let mut sent = Vec::new();
+
+        let usage = resolve_usage(
+            &mut cache,
+            request(now, usage_cache::LIVE_MS),
+            Sources {
+                token: || token(Some(now)),
+                fetch: |access: &str| {
+                    sent.push(access.to_string());
+                    Fetch::Body(BODY.into())
+                },
+                claude_code: no_claude_code,
+                renew: |stale: &OAuthToken, rejected: bool| {
+                    assert!(!rejected);
+                    assert_eq!(stale.access_token, "sk-ant-oat");
+                    Some(signed_in("sk-ant-oat-new", at(28_800).into()))
+                },
+            },
+        );
+
+        assert_eq!(sent, ["sk-ant-oat-new"]);
+        assert!(!usage.sign_in_expired);
+        assert_eq!(usage.body, Some((BODY.into(), now)));
+        assert_eq!(cache.renew_blocked_until, None);
     }
 
     #[test]
-    fn never_sends_an_expired_token_and_keeps_the_last_reading() {
-        let now = TimestampMs::from_unix_seconds(1_800_000_000).unwrap();
+    fn refused_renewal_keeps_the_last_reading_and_backs_off() {
+        let now = at(0);
         let mut cache = stale_cache(now);
 
         let usage = resolve_usage(
             &mut cache,
-            now,
-            usage_cache::STALE_MS,
-            || token(Some(now)),
-            |_| panic!("an expired token must not reach Anthropic"),
+            request(now, usage_cache::STALE_MS),
+            Sources {
+                token: || token(Some(now)),
+                fetch: |_: &str| -> Fetch { panic!("an expired token must not reach Anthropic") },
+                claude_code: no_claude_code,
+                renew: refused,
+            },
         );
 
         assert!(usage.sign_in_expired);
         assert_eq!(usage.body.map(|(_, at)| at), cache.fetched_at);
         assert_eq!(cache.blocked_until, None);
+        assert!(cache.renew_blocked_until.is_some());
+
+        let usage = resolve_usage(
+            &mut cache,
+            request(at(60), usage_cache::STALE_MS),
+            Sources {
+                token: || token(Some(now)),
+                fetch: |_: &str| -> Fetch { panic!("an expired token must not reach Anthropic") },
+                claude_code: no_claude_code,
+                renew: no_renewal,
+            },
+        );
+        assert!(usage.sign_in_expired);
     }
 
     #[test]
-    fn expired_sign_in_is_reported_even_while_rate_limited() {
-        let now = TimestampMs::from_unix_seconds(1_800_000_000).unwrap();
+    fn hard_refresh_retries_a_refused_renewal() {
+        let now = at(0);
         let mut cache = UsageCache {
-            blocked_until: now.checked_add_millis(60_000),
+            renew_blocked_until: Some(at(600)),
             ..stale_cache(now)
         };
 
         let usage = resolve_usage(
             &mut cache,
-            now,
-            usage_cache::FRESH_MS,
-            || token(now.checked_sub_millis(1)),
-            |_| panic!("an expired token must not reach Anthropic"),
+            Request {
+                force: true,
+                ..request(now, usage_cache::LIVE_MS)
+            },
+            Sources {
+                token: || token(Some(now)),
+                fetch: |_: &str| Fetch::Body(BODY.into()),
+                claude_code: no_claude_code,
+                renew: |_: &OAuthToken, _| Some(signed_in("new", at(28_800).into())),
+            },
         );
 
-        assert!(usage.sign_in_expired);
-        assert!(usage.body.is_none());
+        assert_eq!(usage.body.map(|(_, at)| at), Some(now));
+        assert_eq!(cache.renew_blocked_until, None);
     }
 
     #[test]
-    fn rejected_token_reports_expired_sign_in_without_blocking() {
-        let now = TimestampMs::from_unix_seconds(1_800_000_000).unwrap();
+    fn rejected_token_is_renewed_once_and_retried() {
+        let now = at(0);
+        let mut cache = stale_cache(now);
+        let mut sent = Vec::new();
+
+        let usage = resolve_usage(
+            &mut cache,
+            request(now, usage_cache::LIVE_MS),
+            Sources {
+                token: || token(None),
+                fetch: |access: &str| {
+                    sent.push(access.to_string());
+                    if access == "sk-ant-oat" {
+                        Fetch::Unauthorized
+                    } else {
+                        Fetch::Body(BODY.into())
+                    }
+                },
+                claude_code: no_claude_code,
+                renew: |_: &OAuthToken, rejected: bool| {
+                    assert!(rejected);
+                    Some(signed_in("renewed", at(28_800).into()))
+                },
+            },
+        );
+
+        assert_eq!(sent, ["sk-ant-oat", "renewed"]);
+        assert!(!usage.sign_in_expired);
+        assert_eq!(usage.body.map(|(_, at)| at), Some(now));
+    }
+
+    #[test]
+    fn rejected_token_without_renewal_reports_expired_sign_in() {
+        let now = at(0);
         let mut cache = stale_cache(now);
 
         let usage = resolve_usage(
             &mut cache,
-            now,
-            usage_cache::STALE_MS,
-            || token(None),
-            |_| Fetch::Unauthorized,
+            request(now, usage_cache::STALE_MS),
+            Sources {
+                token: || token(None),
+                fetch: |_: &str| Fetch::Unauthorized,
+                claude_code: no_claude_code,
+                renew: refused,
+            },
         );
 
         assert!(usage.sign_in_expired);
@@ -678,8 +792,31 @@ mod tests {
     }
 
     #[test]
+    fn rate_limit_holds_back_requests_and_renewals() {
+        let now = at(0);
+        let mut cache = UsageCache {
+            blocked_until: now.checked_add_millis(60_000),
+            ..stale_cache(now)
+        };
+
+        let usage = resolve_usage(
+            &mut cache,
+            request(now, usage_cache::STALE_MS),
+            Sources {
+                token: || token(Some(now)),
+                fetch: |_: &str| -> Fetch { panic!("a rate-limited token must wait") },
+                claude_code: no_claude_code,
+                renew: no_renewal,
+            },
+        );
+
+        assert!(!usage.sign_in_expired);
+        assert_eq!(usage.body.map(|(_, at)| at), cache.fetched_at);
+    }
+
+    #[test]
     fn fresh_shared_reading_skips_the_keychain() {
-        let now = TimestampMs::from_unix_seconds(1_800_000_000).unwrap();
+        let now = at(0);
         let mut cache = UsageCache {
             fetched_at: now.checked_sub_millis(10_000),
             ..stale_cache(now)
@@ -687,13 +824,63 @@ mod tests {
 
         let usage = resolve_usage(
             &mut cache,
-            now,
-            usage_cache::FRESH_MS,
-            || panic!("a fresh shared reading must not read credentials"),
-            |_| panic!("a fresh shared reading must not refetch"),
+            request(now, usage_cache::FRESH_MS),
+            Sources {
+                token: || -> Option<OAuthToken> {
+                    panic!("a fresh shared reading must not read credentials")
+                },
+                fetch: |_: &str| -> Fetch { panic!("a fresh shared reading must not refetch") },
+                claude_code: no_claude_code,
+                renew: no_renewal,
+            },
         );
 
         assert!(!usage.sign_in_expired);
         assert_eq!(usage.body.map(|(_, at)| at), cache.fetched_at);
+    }
+
+    #[test]
+    fn fresh_claude_code_reading_replaces_a_request() {
+        let now = at(0);
+        let mut cache = stale_cache(now);
+
+        let usage = resolve_usage(
+            &mut cache,
+            request(now, usage_cache::LIVE_MS),
+            Sources {
+                token: || -> Option<OAuthToken> { panic!("Claude Code already fetched") },
+                fetch: |_: &str| -> Fetch { panic!("Claude Code already fetched") },
+                claude_code: || Some((BODY.into(), at(-20))),
+                renew: no_renewal,
+            },
+        );
+
+        assert_eq!(usage.body.map(|(_, at)| at), Some(at(-20)));
+        assert_eq!(cache.fetched_at, Some(at(-20)));
+    }
+
+    #[test]
+    fn hard_refresh_skips_the_fresh_shared_reading() {
+        let now = at(0);
+        let mut cache = UsageCache {
+            fetched_at: Some(at(-10)),
+            ..stale_cache(now)
+        };
+
+        let usage = resolve_usage(
+            &mut cache,
+            Request {
+                force: true,
+                ..request(now, usage_cache::LIVE_MS)
+            },
+            Sources {
+                token: || token(None),
+                fetch: |_: &str| Fetch::Body(BODY.into()),
+                claude_code: no_claude_code,
+                renew: no_renewal,
+            },
+        );
+
+        assert_eq!(usage.body.map(|(_, at)| at), Some(now));
     }
 }

@@ -7,16 +7,23 @@ use crate::{TimestampMs, home};
 /// Anthropic's OAuth usage endpoint answers 429 when polled by several
 /// processes each minute, so every `agent-burn` process shares one response.
 pub(super) const FRESH_MS: i64 = 55_000;
+/// Oldest body the quota collector records as a live observation; the app
+/// rejects readings more than 90 seconds old.
+pub(super) const LIVE_MS: i64 = 85_000;
 /// How long a cached body may stand in for the live meter in reports.
 pub(super) const STALE_MS: i64 = 15 * 60_000;
 const MIN_BACKOFF_MS: i64 = 60_000;
 const MAX_BACKOFF_MS: i64 = 15 * 60_000;
+/// A refused refresh token stays refused until `claude` signs in again, so
+/// retries are spaced instead of hitting the token endpoint every minute.
+const RENEW_BACKOFF_MS: i64 = 10 * 60_000;
 
 #[derive(Clone, Debug, Default, PartialEq)]
 pub(super) struct UsageCache {
     pub(super) fetched_at: Option<TimestampMs>,
     pub(super) body: Option<String>,
     pub(super) blocked_until: Option<TimestampMs>,
+    pub(super) renew_blocked_until: Option<TimestampMs>,
 }
 
 impl UsageCache {
@@ -44,6 +51,7 @@ impl UsageCache {
                 .and_then(Value::as_str)
                 .map(str::to_string),
             blocked_until: millis("blockedUntil"),
+            renew_blocked_until: millis("renewBlockedUntil"),
         }
     }
 
@@ -77,11 +85,44 @@ impl UsageCache {
         self.save();
     }
 
+    /// Keeps a reading another client (Claude Code) fetched when it is newer
+    /// than ours, so it outlives that client's cache and is shared with every
+    /// `agent-burn` process. Rate-limit state is left untouched.
+    pub(super) fn adopt(&mut self, reading: Option<(String, TimestampMs)>, now: TimestampMs) {
+        let Some((body, fetched_at)) = reading else {
+            return;
+        };
+        if fetched_at > now || self.fetched_at.is_some_and(|ours| ours >= fetched_at) {
+            return;
+        }
+        self.fetched_at = Some(fetched_at);
+        self.body = Some(body);
+        self.save();
+    }
+
+    /// A hard refresh retries a refused refresh right away.
+    pub(super) fn renew_due(&self, now: TimestampMs, force: bool) -> bool {
+        force || self.renew_blocked_until.is_none_or(|until| now >= until)
+    }
+
+    pub(super) fn store_renewal(&mut self, renewed: bool, now: TimestampMs) {
+        let blocked_until = if renewed {
+            None
+        } else {
+            now.checked_add_millis(RENEW_BACKOFF_MS)
+        };
+        if self.renew_blocked_until != blocked_until {
+            self.renew_blocked_until = blocked_until;
+            self.save();
+        }
+    }
+
     fn to_json(&self) -> Value {
         json!({
             "fetchedAt": self.fetched_at.map(TimestampMs::as_millis),
             "body": self.body,
             "blockedUntil": self.blocked_until.map(TimestampMs::as_millis),
+            "renewBlockedUntil": self.renew_blocked_until.map(TimestampMs::as_millis),
         })
     }
 
@@ -112,6 +153,9 @@ fn backoff_ms(retry_after_seconds: Option<i64>) -> i64 {
 }
 
 fn path() -> Option<PathBuf> {
+    if cfg!(test) {
+        return None;
+    }
     if let Some(dir) = env::var_os("AGENT_BURN_CACHE_DIR") {
         return Some(PathBuf::from(dir).join("claude-usage.json"));
     }
@@ -139,7 +183,7 @@ mod tests {
         let cache = UsageCache {
             fetched_at: Some(at(0)),
             body: Some("{}".into()),
-            blocked_until: None,
+            ..UsageCache::default()
         };
         assert_eq!(cache.body_within(at(30), FRESH_MS), Some(("{}", at(0))));
         assert_eq!(cache.body_within(at(60), FRESH_MS), None);
@@ -153,9 +197,22 @@ mod tests {
             fetched_at: Some(at(0)),
             body: Some(r#"{"five_hour":null}"#.into()),
             blocked_until: Some(at(174)),
+            renew_blocked_until: Some(at(600)),
         };
         assert_eq!(UsageCache::parse(&cache.to_json().to_string()), cache);
         assert_eq!(UsageCache::parse("not json"), UsageCache::default());
+    }
+
+    #[test]
+    fn spaces_refused_renewals_and_lets_a_hard_refresh_retry() {
+        let mut cache = UsageCache::default();
+        assert!(cache.renew_due(at(0), false));
+        cache.store_renewal(false, at(0));
+        assert!(!cache.renew_due(at(60), false));
+        assert!(cache.renew_due(at(60), true));
+        assert!(cache.renew_due(at(600), false));
+        cache.store_renewal(true, at(600));
+        assert_eq!(cache.renew_blocked_until, None);
     }
 
     #[test]
