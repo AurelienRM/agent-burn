@@ -166,7 +166,7 @@ struct QuotaCheckButton: View {
     .symbolEffect(.pulse, isActive: store.isCheckingQuotas)
     .buttonStyle(.plain).disabled(store.isCheckingQuotas)
     .help(
-      "Check live usage now (⇧⌘R). Bypasses saved readings and renews an expired Claude sign-in."
+      "Check live usage now (⇧⌘R). Bypasses saved readings."
     )
     .accessibilityLabel("Check live usage now")
   }

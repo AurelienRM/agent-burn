@@ -198,7 +198,7 @@ struct DashboardView: View {
         }
         .disabled(store.isCheckingQuotas)
         .help(
-          "Check live usage now (⇧⌘R). Bypasses saved readings and renews an expired Claude sign-in."
+          "Check live usage now (⇧⌘R). Bypasses saved readings."
         )
         SettingsLink { Label("Settings", systemImage: "gearshape") }.help("Settings")
       }

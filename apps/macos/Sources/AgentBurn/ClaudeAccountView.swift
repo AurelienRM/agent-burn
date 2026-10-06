@@ -171,13 +171,13 @@ struct ClaudeVerdict: Equatable {
   let detail: String
 }
 
-/// The CLI renews an expired Claude Code token itself; this verdict means
-/// Anthropic refused the refresh token, so only `/login` in `claude` recovers.
+/// The CLI reads Claude Code's sign-in without renewing it, so an expired or
+/// missing token waits for Claude Code to renew it or for `/login` in `claude`.
 let claudeSignInExpiredVerdict = ClaudeVerdict(
   atRisk: true, headline: String(localized: "Claude Code sign-in expired."),
   detail: String(
     localized:
-      "Anthropic refused to renew the sign-in. Run claude in Terminal and use /login. Showing the last saved readings."
+      "Open Claude Code so it renews its sign-in, or run claude in Terminal and use /login. Showing the last saved readings."
   )
 )
 

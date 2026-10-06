@@ -87,9 +87,20 @@ fn usage_body(offline: bool, max_age_ms: i64) -> Usage {
             token: || Credentials::load()?.token(),
             fetch: fetch_usage_body,
             claude_code: claude_code::cached_usage,
-            renew: oauth_refresh::renew,
+            renew: |token: &OAuthToken, rejected: bool| {
+                renewal_enabled()
+                    .then(|| oauth_refresh::renew(token, rejected))
+                    .flatten()
+            },
         },
     )
+}
+
+/// Read-only by default: renewing rotates Claude Code's refresh token and
+/// rewrites its Keychain item, which can leave Claude Code signed out. Claude
+/// Code renews its own sign-in; `AGENT_BURN_RENEW_CLAUDE_SIGN_IN=1` opts back in.
+fn renewal_enabled() -> bool {
+    env::var("AGENT_BURN_RENEW_CLAUDE_SIGN_IN").as_deref() == Ok("1")
 }
 
 #[derive(Clone, Copy)]

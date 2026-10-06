@@ -929,16 +929,6 @@
         }
       }
     },
-    "Anthropic refused to renew the sign-in. Run claude in Terminal and use /login. Showing the last saved readings.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Anthropic a refusé de renouveler la connexion. Lance claude dans le Terminal et utilise /login. Affichage des derniers relevés enregistrés."
-          }
-        }
-      }
-    },
     "App updates": {
       "localizations": {
         "fr": {
@@ -1279,12 +1269,12 @@
         }
       }
     },
-    "Check live usage now (⇧⌘R). Bypasses saved readings and renews an expired Claude sign-in.": {
+    "Check live usage now (⇧⌘R). Bypasses saved readings.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Vérifier l’usage en direct (⇧⌘R). Ignore les relevés enregistrés et renouvelle une connexion Claude expirée."
+            "value": "Vérifier l’usage en direct (⇧⌘R). Ignore les relevés enregistrés."
           }
         }
       }
@@ -2521,6 +2511,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ouvrir %@"
+          }
+        }
+      }
+    },
+    "Open Claude Code so it renews its sign-in, or run claude in Terminal and use /login. Showing the last saved readings.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvre Claude Code pour qu’il renouvelle sa connexion, ou lance claude dans le Terminal et utilise /login. Affichage des derniers relevés enregistrés."
           }
         }
       }
