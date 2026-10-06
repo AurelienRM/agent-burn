@@ -1,6 +1,6 @@
 {
 	"name": "agent-burn",
-	"version": "20.0.20",
+	"version": "20.0.21",
 	"description": "Compare local coding-agent usage against subscription limits and API-equivalent value",
 	"homepage": "https://agent-burn.melvynx.dev",
 	"bugs": {
