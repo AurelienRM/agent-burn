@@ -413,3 +413,14 @@ private func spendTestCalendar() -> Calendar {
       == "2026-09-01")
   #expect(spendSpanDays(lower: wednesday, upper: wednesday) == 1)
 }
+
+@Test func spendChartDomainReachesTheEdgesOfTheFirstAndLastBucket() {
+  let calendar = spendCalendar()
+  let day = { (month: Int, day: Int) in
+    calendar.date(from: DateComponents(year: 2026, month: month, day: day))!
+  }
+  let domain = spendChartDomain(day(7, 8)...day(10, 6), granularity: .monthly, calendar: calendar)
+  #expect(domain == day(7, 1)...day(11, 1))
+  let daily = spendChartDomain(day(10, 1)...day(10, 6), granularity: .daily, calendar: calendar)
+  #expect(daily == day(10, 1)...day(10, 7))
+}

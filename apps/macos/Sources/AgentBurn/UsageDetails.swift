@@ -304,7 +304,7 @@ struct DailySpendChart: View {
         }
       }
       .chartXSelection(value: $selected)
-      .chartXScale(domain: scale)
+      .chartXScale(domain: spendChartDomain(scale, granularity: effective))
       .chartYAxis {
         AxisMarks(position: .leading) { _ in
           AxisGridLine().foregroundStyle(BurnTheme.line)
@@ -312,11 +312,14 @@ struct DailySpendChart: View {
         }
       }
       .chartXAxis {
-        AxisMarks(values: .automatic(desiredCount: 5)) { _ in
-          if effective == .monthly {
-            AxisValueLabel(format: .dateTime.month(.abbreviated).year()).foregroundStyle(
-              BurnTheme.muted)
-          } else {
+        // One mark per month: automatic marks land several times inside a month bar.
+        if effective == .monthly {
+          AxisMarks(values: .stride(by: .month)) { _ in
+            AxisValueLabel(format: .dateTime.month(.abbreviated).year(), centered: true)
+              .foregroundStyle(BurnTheme.muted)
+          }
+        } else {
+          AxisMarks(values: .automatic(desiredCount: 5)) { _ in
             AxisValueLabel(format: .dateTime.month(.abbreviated).day()).foregroundStyle(
               BurnTheme.muted)
           }

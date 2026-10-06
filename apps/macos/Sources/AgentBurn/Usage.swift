@@ -202,6 +202,17 @@ func spendBucketStart(for date: Date, granularity: SpendGranularity, calendar: C
   }
 }
 
+/// Bars span their whole day, week or month, so the axis must reach the edges of
+/// the first and last bucket or those bars spill past the plot.
+func spendChartDomain(
+  _ scale: ClosedRange<Date>, granularity: SpendGranularity,
+  calendar: Calendar = spendCalendar()
+) -> ClosedRange<Date> {
+  let lower = calendar.dateInterval(of: granularity.unit, for: scale.lowerBound)?.start
+  let upper = calendar.dateInterval(of: granularity.unit, for: scale.upperBound)?.end
+  return (lower ?? scale.lowerBound)...(upper ?? scale.upperBound)
+}
+
 func spendBucketEnd(
   start: Date, granularity: SpendGranularity, calendar: Calendar
 ) -> Date {
