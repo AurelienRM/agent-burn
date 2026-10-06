@@ -187,7 +187,16 @@ struct DashboardView: View {
         } label: {
           Label("Refresh", systemImage: "arrow.clockwise")
         }
-        .help("Refresh usage and live quotas")
+        .help("Refresh usage and live quotas (⌘R)")
+        Button {
+          Task { await store.refreshAll(hard: true) }
+        } label: {
+          Label("Check live usage now", systemImage: "gauge.with.dots.needle.67percent")
+        }
+        .disabled(store.isCheckingQuotas)
+        .help(
+          "Check live usage now (⇧⌘R). Bypasses saved readings and renews an expired Claude sign-in."
+        )
         SettingsLink { Label("Settings", systemImage: "gearshape") }.help("Settings")
       }
     }

@@ -37,7 +37,11 @@ let claudeSessionQuotaAgent = "claude-session"
 
 enum QuotaCollector {
   /// launchd owns scheduling; this process performs one bounded collection and exits.
-  static func collect(directory: URL = QuotaCollectorConfig.directory) async throws {
+  /// `force` is a hard refresh: it waits for a running collection instead of
+  /// skipping, and has the CLI bypass shared readings and retry every fallback.
+  static func collect(directory: URL = QuotaCollectorConfig.directory, force: Bool = false)
+    async throws
+  {
     let config = try JSONDecoder().decode(
       QuotaCollectorConfig.self,
       from: Data(contentsOf: directory.appendingPathComponent("quota-collector.json")))
@@ -47,10 +51,17 @@ enum QuotaCollector {
       O_CREAT | O_RDWR | O_CLOEXEC, 0o600)
     guard descriptor >= 0 else { throw CocoaError(.fileWriteUnknown) }
     defer { close(descriptor) }
-    guard flock(descriptor, LOCK_EX | LOCK_NB) == 0 else { return }
+    let deadline = Date.now.addingTimeInterval(force ? 60 : 0)
+    while flock(descriptor, LOCK_EX | LOCK_NB) != 0 {
+      guard Date.now < deadline else { return }
+      try? await Task.sleep(for: .milliseconds(500))
+    }
     defer { flock(descriptor, LOCK_UN) }
     let file = QuotaHistoryFile(directory: directory)
     _ = try file.load()
+    let environment = ["CODEX_HOME": config.codexHomes, "AGENT_BURN_QUOTA_ONLY": "1"].merging(
+      force ? ["AGENT_BURN_FORCE_REFRESH": "1"] : [:]
+    ) { $1 }
     var saveError: Error?
     await withTaskGroup(of: (String, [QuotaReading], String?).self) { group in
       for agent in ["codex", "claude"] {
@@ -60,8 +71,7 @@ enum QuotaCollector {
             let collected = try await CLIClient.read(
               CollectedHarnessQuota.self,
               executable: executable, arguments: ["harness", agent], offline: false,
-              environment: ["CODEX_HOME": config.codexHomes, "AGENT_BURN_QUOTA_ONLY": "1"],
-              timeout: 45)
+              environment: environment, timeout: 45)
             let reading = QuotaReading(
               agent: agent, observedAt: collected.observedAt, window: collected.window)
             guard collected.agent == agent, reading.observedAt.isFinite, reading.window.isValid,
@@ -86,8 +96,7 @@ enum QuotaCollector {
           let collected = try await CLIClient.read(
             CollectedQuota.self,
             executable: executable, arguments: ["summary", "--value"], offline: false,
-            environment: ["CODEX_HOME": config.codexHomes, "AGENT_BURN_QUOTA_ONLY": "1"],
-            timeout: 45)
+            environment: environment, timeout: 45)
           guard collected.agent == "cursor", collected.observedAt.isFinite,
             abs(Date(timeIntervalSince1970: collected.observedAt / 1000).timeIntervalSinceNow)
               <= 90

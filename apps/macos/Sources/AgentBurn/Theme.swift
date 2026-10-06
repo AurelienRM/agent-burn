@@ -133,16 +133,42 @@ struct RefreshFooter: View {
       Text(bundleVersionText())
         .monospacedDigit()
         .accessibilityLabel("App version")
+      QuotaCheckButton()
       Button {
-        Task { await store.refresh() }
+        Task { await store.refreshAll() }
       } label: {
         Image(systemName: "arrow.clockwise")
           .symbolEffect(.pulse, isActive: store.isLoading)
       }
       .buttonStyle(.plain).disabled(store.isLoading)
-      .help("Refresh usage").accessibilityLabel("Refresh usage")
+      .help("Refresh usage and live quotas (⌘R)").accessibilityLabel("Refresh usage")
     }
     .font(.system(size: 11)).foregroundStyle(compact ? BurnTheme.quotaMuted : BurnTheme.muted)
+  }
+}
+
+/// Hard refresh: re-reads every live quota now instead of waiting for the
+/// next background collection.
+struct QuotaCheckButton: View {
+  @Environment(UsageStore.self) private var store
+  var label = false
+
+  var body: some View {
+    Button {
+      Task { await store.refreshAll(hard: true) }
+    } label: {
+      if label {
+        Label("Check now", systemImage: "gauge.with.dots.needle.67percent")
+      } else {
+        Image(systemName: "gauge.with.dots.needle.67percent")
+      }
+    }
+    .symbolEffect(.pulse, isActive: store.isCheckingQuotas)
+    .buttonStyle(.plain).disabled(store.isCheckingQuotas)
+    .help(
+      "Check live usage now (⇧⌘R). Bypasses saved readings and renews an expired Claude sign-in."
+    )
+    .accessibilityLabel("Check live usage now")
   }
 }
 

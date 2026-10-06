@@ -48,6 +48,13 @@ rapid changes load the latest selected period. Harness tabs read only their own
 source; General reads all sources. Automatic refresh maintains history and recovery
 files without dashboard controls. If a refresh fails, saved data stays visible.
 
+**Refresh** (⌘R, footer and toolbar) reloads reports and live quotas. **Check
+live usage now** (⇧⌘R, the gauge button, or **Check now** on the Claude card)
+is a hard refresh: it waits for any running collection, bypasses shared
+readings, and retries every fallback. When Claude Code's sign-in has expired,
+the CLI renews it with Claude Code's own refresh protocol, so idle `claude`
+sessions pick up the new token instead of logging out.
+
 Codex, Claude, and Cursor promotional-credit quotas are collected every minute by a macOS background agent,
 even after the app quits. Enable or disable this in **Settings → Background quota
 history**; allow background activity in macOS Settings if requested. The agent

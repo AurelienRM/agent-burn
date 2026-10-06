@@ -71,6 +71,7 @@ final class UsageStore {
   private var collectedQuotaSource: String?
   private var quotaCollectionDate: Date?
   private var isCollectingQuotas = false
+  private var pendingForcedCollection = false
   var quotaCheckDate = Date.now
   private let defaults: UserDefaults
   private let historyURL: URL
@@ -243,21 +244,35 @@ final class UsageStore {
     }
   }
 
-  func collectQuotasNow() async {
-    guard !isCollectingQuotas else { return }
+  var isCheckingQuotas: Bool { isCollectingQuotas }
+
+  /// `force` is a hard refresh. One requested during a running collection runs
+  /// right after it rather than being dropped.
+  func collectQuotasNow(force: Bool = false) async {
+    guard !isCollectingQuotas else {
+      if force { pendingForcedCollection = true }
+      return
+    }
     isCollectingQuotas = true
     defer { isCollectingQuotas = false }
-    configureQuotaCollector()
-    collectedQuotaSource = quotaSourceKey
-    quotaCollectionDate = .now
-    do {
-      try await QuotaCollector.collect(directory: cacheURL.deletingLastPathComponent())
-      errors["quotaCollector"] = nil
-    } catch {
-      errors["quotaCollector"] =
-        "Quota collection could not save its readings. Existing history is preserved."
-    }
-    reloadQuotas()
+    var force = force
+    repeat {
+      pendingForcedCollection = false
+      configureQuotaCollector()
+      collectedQuotaSource = quotaSourceKey
+      quotaCollectionDate = .now
+      do {
+        try await QuotaCollector.collect(
+          directory: cacheURL.deletingLastPathComponent(), force: force)
+        errors["quotaCollector"] = nil
+      } catch {
+        errors["quotaCollector"] =
+          "Quota collection could not save its readings. Existing history is preserved."
+      }
+      reloadQuotas()
+      quotaCheckDate = .now
+      force = pendingForcedCollection
+    } while force
   }
 
   private func refreshReports() async {
@@ -273,8 +288,10 @@ final class UsageStore {
       ?? quotaHistory.failures[quotaSourceKey]?[agent]
   }
 
-  func refreshAll() async {
-    async let quotas: () = collectQuotasNow()
+  /// Reports and live quotas together. `hard` re-reads every live meter now,
+  /// bypassing shared readings and retrying each provider fallback.
+  func refreshAll(hard: Bool = false) async {
+    async let quotas: () = collectQuotasNow(force: hard)
     await refresh()
     await quotas
   }

@@ -31,7 +31,10 @@ struct AgentBurnApp: App {
     .defaultSize(width: 1240, height: 820)
     .windowStyle(.titleBar)
     .windowToolbarStyle(.unified)
-    .commands { UpdateCommands() }
+    .commands {
+      UpdateCommands()
+      UsageCommands(store: store)
+    }
     MenuBarExtra {
       MenuPopover().environment(store)
     } label: {
@@ -41,6 +44,19 @@ struct AgentBurnApp: App {
     }
     .menuBarExtraStyle(.window)
     Settings { SettingsView().environment(store) }
+  }
+}
+
+struct UsageCommands: Commands {
+  let store: UsageStore
+
+  var body: some Commands {
+    CommandMenu("Usage") {
+      Button("Refresh") { Task { await store.refreshAll() } }
+        .keyboardShortcut("r")
+      Button("Check Live Usage Now") { Task { await store.refreshAll(hard: true) } }
+        .keyboardShortcut("r", modifiers: [.command, .shift])
+    }
   }
 }
 

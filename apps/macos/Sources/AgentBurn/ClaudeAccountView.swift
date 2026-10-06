@@ -65,7 +65,12 @@ struct ClaudeAccountView: View {
   /// The newest saved session reading, kept after its window resets for the reset time.
   private var lastSession: Forecast? { store.forecast(for: claudeSessionQuotaAgent) }
   private var session: Forecast? { lastSession.flatMap { $0.reset > now ? $0 : nil } }
-  private var signInExpired: Bool { store.summary?.claudeAccountStatus == "signInExpired" }
+  /// The report's status is only as new as the report; a live reading collected
+  /// since then proves Claude Code renewed its sign-in.
+  private var signInExpired: Bool {
+    store.summary?.claudeAccountStatus == "signInExpired"
+      && !(weekly?.isFresh(at: now) ?? false)
+  }
   private var sessionReset: Date? {
     [claudeDate(account?.sessionResetsAtMs), lastSession?.reset].compactMap { $0 }.max()
   }
@@ -81,6 +86,7 @@ struct ClaudeAccountView: View {
             Text(currency(price) + " / month").monospacedDigit()
           }
           if let latest = weekly ?? session { freshness(latest) }
+          QuotaCheckButton(label: true)
         }
       }
       if signInExpired {
@@ -108,7 +114,7 @@ struct ClaudeAccountView: View {
       }
       if account == nil && !signInExpired {
         Text(
-          "Live account limits are unavailable. Refresh with live data enabled to load Claude’s meters."
+          "Live account limits are unavailable. Use Check now with live data enabled to load Claude’s meters."
         )
         .font(.caption).foregroundStyle(.secondary)
       }
@@ -156,10 +162,13 @@ struct ClaudeVerdict: Equatable {
   let detail: String
 }
 
-/// Anthropic rejects an expired Claude Code token and only the `claude` CLI refreshes it.
+/// The CLI renews an expired Claude Code token itself; this verdict means
+/// Anthropic refused the refresh token, so only `/login` in `claude` recovers.
 let claudeSignInExpiredVerdict = ClaudeVerdict(
   atRisk: true, headline: "Claude Code sign-in expired.",
-  detail: "Run claude in Terminal to resume live limits. Showing the last saved readings.")
+  detail:
+    "Anthropic refused to renew the sign-in. Run claude in Terminal and use /login. Showing the last saved readings."
+)
 
 /// Session run-outs come first because they lock you out soonest.
 func claudeVerdict(session: Forecast?, weekly: Forecast?, now: Date) -> ClaudeVerdict? {
