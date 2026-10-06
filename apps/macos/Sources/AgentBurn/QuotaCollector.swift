@@ -86,7 +86,10 @@ enum QuotaCollector {
             }
             return (agent, readings, nil)
           } catch {
-            return (agent, [], "Live quota could not be collected. The last reading is preserved.")
+            return (
+              agent, [],
+              String(localized: "Live quota could not be collected. The last reading is preserved.")
+            )
           }
         }
       }
@@ -112,7 +115,9 @@ enum QuotaCollector {
         } catch {
           return (
             "cursor", [],
-            "Live Cursor credits could not be collected. The last reading is preserved."
+            String(
+              localized:
+                "Live Cursor credits could not be collected. The last reading is preserved.")
           )
         }
       }

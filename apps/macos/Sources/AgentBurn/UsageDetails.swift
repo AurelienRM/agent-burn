@@ -87,7 +87,7 @@ struct QuotaSummary: View {
               .font(.system(size: 12, weight: .medium))
               .foregroundStyle(BurnTheme.ink)
               .lineLimit(1)
-              .help("Codex rate-limit resets you can redeem now.")
+              .help(String(localized: "Codex rate-limit resets you can redeem now."))
           }
         }
         .accessibilityElement(children: .combine)
@@ -132,7 +132,7 @@ struct QuotaSummary: View {
   @ViewBuilder private var staleMark: some View {
     Image(systemName: "clock.badge.exclamationmark")
       .foregroundStyle(.orange)
-      .help(staleHelp ?? "Showing the last known reading. Update pending.")
+      .help(staleHelp ?? String(localized: "Showing the last known reading. Update pending."))
       .accessibilityLabel("Last known quota; update pending")
   }
 
@@ -150,32 +150,38 @@ struct QuotaSummary: View {
         detail: resetDetail,
         help: "\(style.resetHelp) \(quotaDateText(forecast.reset)).")
       row(
-        "Used",
+        String(localized: "Used"),
         "\(quotaUsedPercent(forecast).formatted(.number.precision(.fractionLength(1))))%",
-        detail: "since \(quotaDayLabel(forecast.start))",
+        detail: String(localized: "since \(quotaDayLabel(forecast.start))"),
         help: style.usedHelp
       )
       row(
-        "Daily",
-        "\(forecast.dailyAllowance.formatted(.number.precision(.fractionLength(1))))%\u{00A0}/ day",
-        help: "Remaining quota divided by the time until reset.")
+        String(localized: "Daily"),
+        String(
+          localized:
+            "\(forecast.dailyAllowance.formatted(.number.precision(.fractionLength(1))))%\u{00A0}/ day"
+        ),
+        help: String(localized: "Remaining quota divided by the time until reset."))
       if let dollars = quotaDollarsPerPercentLabel(rates?.dollarsPerPercent) {
         row(
-          "Avg $ / %", dollars,
+          String(localized: "Avg $ / %"), dollars,
           detail: quotaTokensPerUnitLabel(rates?.tokensPerDollar, unit: "$"),
           help:
-            "API-equivalent spend this cycle divided by used quota percent. Tokens / $ uses logged tokens for the same days, or the last 30 days of model usage when cycle tokens are missing."
+            String(
+              localized:
+                "API-equivalent spend this cycle divided by used quota percent. Tokens / $ uses logged tokens for the same days, or the last 30 days of model usage when cycle tokens are missing."
+            )
         )
       } else if let tokensPer = quotaTokensPerUnitLabel(rates?.tokensPerDollar, unit: "$") {
         row(
-          "Avg tokens / $", tokensPer,
-          help: "Logged tokens divided by API-equivalent spend.")
+          String(localized: "Avg tokens / $"), tokensPer,
+          help: String(localized: "Logged tokens divided by API-equivalent spend."))
       }
       if let available = availableResets {
         row(
-          "Resets", "\(available)",
-          detail: "banked",
-          help: "Codex rate-limit resets you can redeem now.")
+          String(localized: "Resets"), "\(available)",
+          detail: String(localized: "banked"),
+          help: String(localized: "Codex rate-limit resets you can redeem now."))
       }
     }
     .padding(.horizontal, 10).padding(.vertical, 9)
@@ -259,7 +265,7 @@ struct DailySpendChart: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 18) {
       HStack {
-        SectionLabel(title: headerTitle, detail: "API-equivalent USD")
+        SectionLabel(title: headerTitle, detail: String(localized: "API-equivalent USD"))
         Spacer()
         if showsGranularity {
           Picker("Granularity", selection: granularityBinding) {
@@ -330,12 +336,14 @@ struct HarnessSpendDetails: View {
     VStack(alignment: .leading, spacing: 26) {
       if !report.daily.isEmpty {
         DailySpendChart(
-          title: "Daily usage · current cycle", days: report.daily,
+          title: String(localized: "Daily usage · current cycle"), days: report.daily,
           color: BurnTheme.color(for: report.agent))
       }
       if let mix = report.spendMix, !mix.isEmpty {
         VStack(alignment: .leading, spacing: 14) {
-          SectionLabel(title: "Spend by token type", detail: "Past 30 days")
+          SectionLabel(
+            title: String(localized: "Spend by token type"),
+            detail: String(localized: "Past 30 days"))
           ForEach(mix) { category in
             HStack {
               Text(category.label.capitalized).frame(maxWidth: .infinity, alignment: .leading)
@@ -350,32 +358,37 @@ struct HarnessSpendDetails: View {
       }
       if let trend = report.weeklyTrend, !trend.isEmpty {
         DailySpendChart(
-          title: "Weekly trend", days: trend.map { DailyUsage(date: $0.weekStart, cost: $0.cost) },
+          title: String(localized: "Weekly trend"),
+          days: trend.map { DailyUsage(date: $0.weekStart, cost: $0.cost) },
           color: BurnTheme.color(for: report.agent), showsGranularity: false)
       }
       if let estimate = report.estimate {
         VStack(alignment: .leading, spacing: 14) {
-          SectionLabel(title: "Quota value estimate", detail: "Based on current cycle")
-          detail("Full quota value", currency(estimate.fullQuotaValue))
+          SectionLabel(
+            title: String(localized: "Quota value estimate"),
+            detail: String(localized: "Based on current cycle"))
+          detail(String(localized: "Full quota value"), currency(estimate.fullQuotaValue))
           if let dollars = quotaDollarsPerPercentLabel(estimate.fullQuotaValue / 100) {
-            detail("Average $ / %", dollars)
+            detail(String(localized: "Average $ / %"), dollars)
           }
-          detail("Monthly quota value", currency(estimate.monthlyValue))
+          detail(String(localized: "Monthly quota value"), currency(estimate.monthlyValue))
           detail(
-            "Projected quota consumption",
+            String(localized: "Projected quota consumption"),
             "\(estimate.projectedUsePercent.formatted(.number.precision(.fractionLength(0))))%")
           if let multiple = estimate.valueMultiple {
             detail(
-              "Quota value / plan price",
+              String(localized: "Quota value / plan price"),
               "\(multiple.formatted(.number.precision(.fractionLength(1))))×")
           }
         }
       }
       if let images = report.imageGenerations, report.agent == "codex" {
         VStack(alignment: .leading, spacing: 14) {
-          SectionLabel(title: "Image generations", detail: "Past 30 days")
-          detail("Generated images", images.count.formatted())
-          detail("Estimated image cost", currency(images.estimatedCost))
+          SectionLabel(
+            title: String(localized: "Image generations"), detail: String(localized: "Past 30 days")
+          )
+          detail(String(localized: "Generated images"), images.count.formatted())
+          detail(String(localized: "Estimated image cost"), currency(images.estimatedCost))
           Text(
             "\(currency(images.pricePerImageEstimate)) per image estimate. Separate from token usage."
           )
@@ -411,8 +424,9 @@ struct SourceUsageView: View {
         HarnessIcon(agent: agent, size: 28)
         VStack(alignment: .leading, spacing: 2) {
           Text(harnessName(agent)).font(.system(size: 15, weight: .semibold))
-          Text(subscription?.plan ?? "Harness usage").font(.system(size: 11)).foregroundStyle(
-            BurnTheme.quotaMuted)
+          Text(subscription?.plan ?? String(localized: "Harness usage")).font(.system(size: 11))
+            .foregroundStyle(
+              BurnTheme.quotaMuted)
         }
         Spacer()
         PeriodPicker(width: 130).controlSize(.small)
@@ -432,7 +446,7 @@ struct SourceUsageView: View {
               stale: !forecast.isFresh(at: store.quotaCheckDate)
                 || store.quotaError(for: "cursor") != nil,
               staleHelp: store.quotaError(for: "cursor")
-                ?? "Showing the last known reading. Update pending.",
+                ?? String(localized: "Showing the last known reading. Update pending."),
               compact: compact,
               rates: store.blendRates(for: "cursor"),
               style: .promotionalCredits)
@@ -453,19 +467,22 @@ struct SourceUsageView: View {
         }
         HStack(spacing: 10) {
           MetricTile(
-            title: "Spend", value: currency(usage.totalCost),
-            detail: store.period.label + " · API-equivalent", symbol: "dollarsign",
+            title: String(localized: "Spend"), value: currency(usage.totalCost),
+            detail: String(localized: "\(store.period.label) · API-equivalent"),
+            symbol: "dollarsign",
             compact: true
           )
           .burnCard(padding: 12, radius: 12)
           MetricTile(
-            title: "Tokens", value: tokens(usage.totalTokens), detail: "Input, output and cache",
+            title: String(localized: "Tokens"), value: tokens(usage.totalTokens),
+            detail: String(localized: "Input, output and cache"),
             symbol: "square.stack.3d.up.fill", tint: .blue, compact: true
           )
           .burnCard(padding: 12, radius: 12)
           if !compact, let price = subscription?.pricePerMonth {
             MetricTile(
-              title: "Monthly plan", value: currency(price), detail: subscription?.plan ?? "",
+              title: String(localized: "Monthly plan"), value: currency(price),
+              detail: subscription?.plan ?? "",
               symbol: "creditcard.fill", tint: .purple, compact: true
             )
             .burnCard(padding: 12, radius: 12)
@@ -475,7 +492,7 @@ struct SourceUsageView: View {
           !(compact && cursorHasPromotionalCredits(store.summary?.cursorAccount))
         {
           DailySpendChart(
-            title: "Daily usage",
+            title: String(localized: "Daily usage"),
             days: agent == "cursor" && !cursorHasPromotionalCredits(store.summary?.cursorAccount)
               ? dailyUsage(daily, scope: cursorScope) : daily,
             color: BurnTheme.color(for: agent),
@@ -490,7 +507,7 @@ struct SourceUsageView: View {
             agent == "cursor" && !cursorHasPromotionalCredits(store.summary?.cursorAccount)
             ? modelUsage(models, scope: cursorScope) : models
           VStack(alignment: .leading, spacing: 14) {
-            SectionLabel(title: "Model breakdown", detail: store.period.label)
+            SectionLabel(title: String(localized: "Model breakdown"), detail: store.period.label)
             ForEach(Array(shown.prefix(compact ? 3 : shown.count))) { model in
               HStack {
                 Text(model.model).lineLimit(1).help(model.model)
@@ -504,11 +521,12 @@ struct SourceUsageView: View {
         }
         if !compact, let breakdown = usage.tokenBreakdown {
           VStack(alignment: .leading, spacing: 14) {
-            SectionLabel(title: "Token breakdown", detail: store.period.label)
+            SectionLabel(title: String(localized: "Token breakdown"), detail: store.period.label)
             ForEach(
               [
-                ("input", "Input"), ("output", "Output"), ("cacheWrite", "Cache write"),
-                ("cacheRead", "Cache read"),
+                ("input", String(localized: "Input")), ("output", String(localized: "Output")),
+                ("cacheWrite", String(localized: "Cache write")),
+                ("cacheRead", String(localized: "Cache read")),
               ], id: \.0
             ) { key, label in
               HStack {
@@ -524,10 +542,16 @@ struct SourceUsageView: View {
       } else {
         ReportNotice(
           message: store.isLoading
-            ? "Reading harness usage…"
+            ? String(localized: "Reading harness usage…")
             : agent == "cursor" && store.offline
-              ? "Cursor usage requires its dashboard connection. Turn off cached mode in Settings to load it."
-              : "No usage found for this period. Choose a longer range and check that the harness is signed in."
+              ? String(
+                localized:
+                  "Cursor usage requires its dashboard connection. Turn off cached mode in Settings to load it."
+              )
+              : String(
+                localized:
+                  "No usage found for this period. Choose a longer range and check that the harness is signed in."
+              )
         )
       }
     }

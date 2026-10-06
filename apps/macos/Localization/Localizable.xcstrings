@@ -1,0 +1,3996 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    " left": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " restant"
+          }
+        }
+      }
+    },
+    "% remaining": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "% restant"
+          }
+        }
+      }
+    },
+    "%@ %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ %2$@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$@"
+          }
+        }
+      }
+    },
+    "%@ %@ remaining": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ %2$@ remaining"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ %2$@ restant"
+          }
+        }
+      }
+    },
+    "%@ / month": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ / mois"
+          }
+        }
+      }
+    },
+    "%@ fast": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ rapide"
+          }
+        }
+      }
+    },
+    "%@ left": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ restant"
+          }
+        }
+      }
+    },
+    "%@ limit": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Limite %@"
+          }
+        }
+      }
+    },
+    "%@ over %lld days": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ over %2$lld days"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ sur %2$lld jours"
+          }
+        }
+      }
+    },
+    "%@ pace": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "rythme %@"
+          }
+        }
+      }
+    },
+    "%@ per image estimate. Separate from token usage.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ par image (estimation). Distinct de l’usage en tokens."
+          }
+        }
+      }
+    },
+    "%@ quota remaining": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quota %@ restant"
+          }
+        }
+      }
+    },
+    "%@ reached.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ atteinte."
+          }
+        }
+      }
+    },
+    "%@ remaining": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ restant"
+          }
+        }
+      }
+    },
+    "%@ remaining at %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ remaining at %2$@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ restant à %2$@"
+          }
+        }
+      }
+    },
+    "%@ runs out ≈ %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ runs out ≈ %2$@."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ épuisée vers %2$@."
+          }
+        }
+      }
+    },
+    "%@ to last until the %@ reset.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ to last until the %2$@ reset."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ pour tenir jusqu’à la réinitialisation de %2$@."
+          }
+        }
+      }
+    },
+    "%@ tokens": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ tokens"
+          }
+        }
+      }
+    },
+    "%@ used": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ utilisés"
+          }
+        }
+      }
+    },
+    "%@ used this cycle": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ utilisés ce cycle"
+          }
+        }
+      }
+    },
+    "%@ · API-equivalent": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · équivalent API"
+          }
+        }
+      }
+    },
+    "%@ · weekly": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · hebdo"
+          }
+        }
+      }
+    },
+    "%@ – %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ – %2$@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ – %2$@"
+          }
+        }
+      }
+    },
+    "%@%%": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ %%"
+          }
+        }
+      }
+    },
+    "%@%% / day": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ %% / jour"
+          }
+        }
+      }
+    },
+    "%@%% remaining": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ %% restant"
+          }
+        }
+      }
+    },
+    "%@%% used": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ %% utilisé"
+          }
+        }
+      }
+    },
+    "%@%% used · reported by Cursor": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ %% utilisé · selon Cursor"
+          }
+        }
+      }
+    },
+    "%@%% / day": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ %% / jour"
+          }
+        }
+      }
+    },
+    "%@, %@, %@ tokens": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@, %2$@, %3$@ tokens"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, %2$@, %3$@ tokens"
+          }
+        }
+      }
+    },
+    "%@. %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@. %2$@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@. %2$@"
+          }
+        }
+      }
+    },
+    "%@/mo": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@/mois"
+          }
+        }
+      }
+    },
+    "%dh %02dm": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$dh %2$02dm"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%dh %02dmin"
+          }
+        }
+      }
+    },
+    "%lld active": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld actifs"
+          }
+        }
+      }
+    },
+    "%lld agents": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld agents"
+          }
+        }
+      }
+    },
+    "%lld models": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld modèles"
+          }
+        }
+      }
+    },
+    "%lld possible": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld possibles"
+          }
+        }
+      }
+    },
+    "%lld recorded · %lld scheduled, %lld possible": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$lld recorded · %2$lld scheduled, %3$lld possible"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld enregistrées · %2$lld prévues, %3$lld possibles"
+          }
+        }
+      }
+    },
+    "%lld resets": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld réinitialisations"
+          }
+        }
+      }
+    },
+    "%lld resets available": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld réinitialisations disponibles"
+          }
+        }
+      }
+    },
+    "%lld scheduled": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld prévues"
+          }
+        }
+      }
+    },
+    "%lld scheduled · %lld possible": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$lld scheduled · %2$lld possible"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld prévues · %2$lld possibles"
+          }
+        }
+      }
+    },
+    "%lld · available source data": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld · données sources disponibles"
+          }
+        }
+      }
+    },
+    "%lld%%": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld %%"
+          }
+        }
+      }
+    },
+    "%lld%% · stale": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld %% · périmé"
+          }
+        }
+      }
+    },
+    "%lldd": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lldj"
+          }
+        }
+      }
+    },
+    "%lldd %lldh": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$lldd %2$lldh"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lldj %2$lldh"
+          }
+        }
+      }
+    },
+    "%lldh": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lldh"
+          }
+        }
+      }
+    },
+    "%lldm": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lldmin"
+          }
+        }
+      }
+    },
+    "+%@ pts ahead": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "+%@ pts d’avance"
+          }
+        }
+      }
+    },
+    "+%@%% ahead": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "+%@ %% d’avance"
+          }
+        }
+      }
+    },
+    "+%lld": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "+%lld"
+          }
+        }
+      }
+    },
+    "1 reset": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 réinitialisation"
+          }
+        }
+      }
+    },
+    "1 reset available": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 réinitialisation disponible"
+          }
+        }
+      }
+    },
+    "5-hour session": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Session de 5 h"
+          }
+        }
+      }
+    },
+    "<1h": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "<1h"
+          }
+        }
+      }
+    },
+    "A forecast will appear once this cycle has recorded usage.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une prévision apparaîtra dès que ce cycle aura enregistré de l’usage."
+          }
+        }
+      }
+    },
+    "A little ahead of pace": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un peu en avance sur le rythme"
+          }
+        }
+      }
+    },
+    "API pricing discount: %@%%": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remise vs prix API : %@ %%"
+          }
+        }
+      }
+    },
+    "API-equivalent USD": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "USD équivalent API"
+          }
+        }
+      }
+    },
+    "API-equivalent minus plan: %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Équivalent API moins l’abonnement : %@"
+          }
+        }
+      }
+    },
+    "API-equivalent spend this cycle divided by used quota percent. Tokens / $ uses logged tokens for the same days, or the last 30 days of model usage when cycle tokens are missing.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dépenses équivalent API du cycle divisées par le pourcentage de quota utilisé. Tokens / $ utilise les tokens enregistrés sur les mêmes jours, ou les 30 derniers jours d’usage si les tokens du cycle manquent."
+          }
+        }
+      }
+    },
+    "API-equivalent usage estimates token value, not your subscription bill.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’équivalent API estime la valeur des tokens, pas ta facture d’abonnement."
+          }
+        }
+      }
+    },
+    "API-equivalent value": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valeur équivalent API"
+          }
+        }
+      }
+    },
+    "API-equivalent · %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Équivalent API · %@"
+          }
+        }
+      }
+    },
+    "API-equivalent · 30 days": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Équivalent API · 30 jours"
+          }
+        }
+      }
+    },
+    "API-equivalent · past 30 days": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Équivalent API · 30 derniers jours"
+          }
+        }
+      }
+    },
+    "About": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À propos"
+          }
+        }
+      }
+    },
+    "Absolute path to the native agent-burn executable": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chemin absolu vers l’exécutable natif agent-burn"
+          }
+        }
+      }
+    },
+    "Account balances unavailable. Refresh with live data enabled to retrieve Cursor’s allowance, credits and billing cycle.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Soldes du compte indisponibles. Actualise avec les données en direct activées pour récupérer l’allocation, les crédits et le cycle de facturation de Cursor."
+          }
+        }
+      }
+    },
+    "Account credits": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crédits du compte"
+          }
+        }
+      }
+    },
+    "Across all harnesses": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tous agents confondus"
+          }
+        }
+      }
+    },
+    "Adjust to move the cursor one day at a time.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajuste pour déplacer le curseur jour par jour."
+          }
+        }
+      }
+    },
+    "Agent Burn": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agent Burn"
+          }
+        }
+      }
+    },
+    "Agent Burn %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agent Burn %@"
+          }
+        }
+      }
+    },
+    "Agent Burn CLI not found. Choose the native agent-burn executable in Settings.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CLI Agent Burn introuvable. Choisis l’exécutable natif agent-burn dans les Réglages."
+          }
+        }
+      }
+    },
+    "Agent Burn exited with status %d. Check your CLI configuration and harness sign-in, then retry.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agent Burn s’est arrêté avec le code %d. Vérifie la configuration du CLI et la connexion de l’agent, puis réessaie."
+          }
+        }
+      }
+    },
+    "Agent Burn reads the same local harness logs as the CLI. Choose the executable in Settings if it isn't detected automatically.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agent Burn lit les mêmes logs locaux que le CLI. Choisis l’exécutable dans les Réglages s’il n’est pas détecté automatiquement."
+          }
+        }
+      }
+    },
+    "Agent identity": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Identité d’agent"
+          }
+        }
+      }
+    },
+    "Agents": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agents"
+          }
+        }
+      }
+    },
+    "All models": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tous les modèles"
+          }
+        }
+      }
+    },
+    "All time": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Depuis le début"
+          }
+        }
+      }
+    },
+    "Allow Agent Burn background activity in System Settings. Quotas are collected while this app is open.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autorise l’activité en arrière-plan d’Agent Burn dans les Réglages Système. Les quotas sont collectés tant que l’app est ouverte."
+          }
+        }
+      }
+    },
+    "Allow Agent Burn in System Settings to finish enabling launch at login.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autorise Agent Burn dans les Réglages Système pour terminer l’activation du lancement à l’ouverture de session."
+          }
+        }
+      }
+    },
+    "Allow Agent Burn to run in the background in System Settings to enable collection.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autorise Agent Burn à s’exécuter en arrière-plan dans les Réglages Système pour activer la collecte."
+          }
+        }
+      }
+    },
+    "Anthropic refused to renew the sign-in. Run claude in Terminal and use /login. Showing the last saved readings.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anthropic a refusé de renouveler la connexion. Lance claude dans le Terminal et utilise /login. Affichage des derniers relevés enregistrés."
+          }
+        }
+      }
+    },
+    "App updates": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mises à jour de l’app"
+          }
+        }
+      }
+    },
+    "App version": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version de l’app"
+          }
+        }
+      }
+    },
+    "Appearance": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apparence"
+          }
+        }
+      }
+    },
+    "Apply and refresh": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appliquer et actualiser"
+          }
+        }
+      }
+    },
+    "At this pace both limits last until they reset.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À ce rythme, les deux limites tiennent jusqu’à leur réinitialisation."
+          }
+        }
+      }
+    },
+    "At this pace the limit lasts until it resets.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À ce rythme, la limite tient jusqu’à sa réinitialisation."
+          }
+        }
+      }
+    },
+    "At this pace, your quota may run out %@ days early.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À ce rythme, ton quota pourrait être épuisé %@ jours trop tôt."
+          }
+        }
+      }
+    },
+    "Automatic updates are off in this build. Pull the fork and rebuild to update.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les mises à jour automatiques sont désactivées dans cette version. Récupère le fork et recompile pour mettre à jour."
+          }
+        }
+      }
+    },
+    "Automatically check for updates": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rechercher automatiquement les mises à jour"
+          }
+        }
+      }
+    },
+    "Automatically refresh": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actualisation automatique"
+          }
+        }
+      }
+    },
+    "Available source data": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Données sources disponibles"
+          }
+        }
+      }
+    },
+    "Average $ / %": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moyenne $ / %"
+          }
+        }
+      }
+    },
+    "Avg $ / %": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moy. $ / %"
+          }
+        }
+      }
+    },
+    "Avg tokens / $": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moy. tokens / $"
+          }
+        }
+      }
+    },
+    "Background": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrière-plan"
+          }
+        }
+      }
+    },
+    "Background collection could not start. Enable it in Settings → Background quota history.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La collecte en arrière-plan n’a pas pu démarrer. Active-la dans Réglages → Historique des quotas en arrière-plan."
+          }
+        }
+      }
+    },
+    "Background collection is unavailable. Enable it in Settings to continue collecting after quitting.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La collecte en arrière-plan est indisponible. Active-la dans les Réglages pour continuer après avoir quitté l’app."
+          }
+        }
+      }
+    },
+    "Background quota history": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Historique des quotas en arrière-plan"
+          }
+        }
+      }
+    },
+    "Background quota settings could not be saved.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les réglages de collecte en arrière-plan n’ont pas pu être enregistrés."
+          }
+        }
+      }
+    },
+    "Based on current cycle": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "D’après le cycle en cours"
+          }
+        }
+      }
+    },
+    "Billing cycle": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cycle de facturation"
+          }
+        }
+      }
+    },
+    "Bundled agent-burn": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "agent-burn intégré"
+          }
+        }
+      }
+    },
+    "Busiest agents": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agents les plus actifs"
+          }
+        }
+      }
+    },
+    "By harness": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Par agent"
+          }
+        }
+      }
+    },
+    "CLI executable": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exécutable CLI"
+          }
+        }
+      }
+    },
+    "CLI snapshot": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Instantané CLI"
+          }
+        }
+      }
+    },
+    "Cache read": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lecture cache"
+          }
+        }
+      }
+    },
+    "Cache write": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Écriture cache"
+          }
+        }
+      }
+    },
+    "Cached": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En cache"
+          }
+        }
+      }
+    },
+    "Cached mode skips live subscription requests. Otherwise, the CLI may contact pricing and harness providers.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le mode cache évite les requêtes d’abonnement en direct. Sinon, le CLI peut contacter les fournisseurs de tarifs et d’agents."
+          }
+        }
+      }
+    },
+    "Changes only the weekly quota chart. Spend period stays independent.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ne modifie que le graphique du quota hebdo. La période de dépenses reste indépendante."
+          }
+        }
+      }
+    },
+    "Check Live Usage Now": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifier l’usage en direct"
+          }
+        }
+      }
+    },
+    "Check for Updates…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rechercher des mises à jour…"
+          }
+        }
+      }
+    },
+    "Check live usage now": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifier l’usage en direct"
+          }
+        }
+      }
+    },
+    "Check live usage now (⇧⌘R). Bypasses saved readings and renews an expired Claude sign-in.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifier l’usage en direct (⇧⌘R). Ignore les relevés enregistrés et renouvelle une connexion Claude expirée."
+          }
+        }
+      }
+    },
+    "Check now": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifier"
+          }
+        }
+      }
+    },
+    "Choose a longer range or run a session with this agent.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisis une période plus longue ou lance une session avec cet agent."
+          }
+        }
+      }
+    },
+    "Choose executable…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisir l’exécutable…"
+          }
+        }
+      }
+    },
+    "Choose the native agent-burn executable.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisis l’exécutable natif agent-burn."
+          }
+        }
+      }
+    },
+    "Claude %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude %@"
+          }
+        }
+      }
+    },
+    "Claude Code sign-in expired.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connexion Claude Code expirée."
+          }
+        }
+      }
+    },
+    "Claude account meters could not be saved. The last saved reading is preserved.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les compteurs du compte Claude n’ont pas pu être enregistrés. Le dernier relevé est conservé."
+          }
+        }
+      }
+    },
+    "Cloud": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cloud"
+          }
+        }
+      }
+    },
+    "Cloud (work)": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cloud (travail)"
+          }
+        }
+      }
+    },
+    "Code review": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revue de code"
+          }
+        }
+      }
+    },
+    "Codex homes": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dossiers Codex"
+          }
+        }
+      }
+    },
+    "Codex rate-limit resets you can redeem now.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réinitialisations de limite Codex utilisables maintenant."
+          }
+        }
+      }
+    },
+    "Collect quotas every minute": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Collecter les quotas chaque minute"
+          }
+        }
+      }
+    },
+    "Comma-separated Codex folders. The normal ~/.codex folder is included alongside the launching profile. Sessions and archived sessions are read by the CLI.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dossiers Codex séparés par des virgules. Le dossier ~/.codex habituel est inclus avec le profil de lancement. Les sessions et sessions archivées sont lues par le CLI."
+          }
+        }
+      }
+    },
+    "Connect your usage": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connecte ton usage"
+          }
+        }
+      }
+    },
+    "Could not change login behavior: %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible de modifier le lancement à l’ouverture : %@"
+          }
+        }
+      }
+    },
+    "Credits remaining": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crédits restants"
+          }
+        }
+      }
+    },
+    "Cursor %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cursor %@"
+          }
+        }
+      }
+    },
+    "Cursor models": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modèles Cursor"
+          }
+        }
+      }
+    },
+    "Cursor usage requires its dashboard connection. Turn off cached mode in Settings to load it.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’usage Cursor nécessite la connexion à son tableau de bord. Désactive le mode cache dans les Réglages pour le charger."
+          }
+        }
+      }
+    },
+    "Daily": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quotidien"
+          }
+        }
+      }
+    },
+    "Daily metrics could not be saved. Check the history file location.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les métriques quotidiennes n’ont pas pu être enregistrées. Vérifie l’emplacement du fichier d’historique."
+          }
+        }
+      }
+    },
+    "Daily spend": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dépenses quotidiennes"
+          }
+        }
+      }
+    },
+    "Daily spend models": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modèles par dépense quotidienne"
+          }
+        }
+      }
+    },
+    "Daily usage": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usage quotidien"
+          }
+        }
+      }
+    },
+    "Daily usage · current cycle": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usage quotidien · cycle en cours"
+          }
+        }
+      }
+    },
+    "Data": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Données"
+          }
+        }
+      }
+    },
+    "Data source": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Source des données"
+          }
+        }
+      }
+    },
+    "Date": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Date"
+          }
+        }
+      }
+    },
+    "Day": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jour"
+          }
+        }
+      }
+    },
+    "Desktop app": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App de bureau"
+          }
+        }
+      }
+    },
+    "Desktop app (work)": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App de bureau (travail)"
+          }
+        }
+      }
+    },
+    "Docs": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Docs"
+          }
+        }
+      }
+    },
+    "Drag across the chart to read remaining quota at any time. Recorded holds until the next live reading, then steps with each drop. Missing collector gaps stay connected. Pace spreads the weekly limit evenly until reset. Forecast projects observed usage until the next reset. The recorded line and fill stay green while remaining is ahead of pace, and turn red where remaining falls behind.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Glisse sur le graphique pour lire le quota restant à tout moment. La courbe enregistrée reste plate jusqu’au relevé suivant, puis descend à chaque baisse. Les trous de collecte restent reliés. Le rythme répartit la limite hebdo uniformément jusqu’à la réinitialisation. La prévision projette l’usage observé jusqu’à la prochaine réinitialisation. La courbe et le remplissage restent verts tant que le restant est en avance sur le rythme, et deviennent rouges quand il passe en retard."
+          }
+        }
+      }
+    },
+    "Empty": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Épuisé"
+          }
+        }
+      }
+    },
+    "Empty %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Épuisé %@"
+          }
+        }
+      }
+    },
+    "End": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fin"
+          }
+        }
+      }
+    },
+    "Estimated image cost": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Coût estimé des images"
+          }
+        }
+      }
+    },
+    "Every 15 minutes": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toutes les 15 minutes"
+          }
+        }
+      }
+    },
+    "Every 30 minutes": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toutes les 30 minutes"
+          }
+        }
+      }
+    },
+    "Every 5 minutes": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toutes les 5 minutes"
+          }
+        }
+      }
+    },
+    "Every minute": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chaque minute"
+          }
+        }
+      }
+    },
+    "Expires": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Expire"
+          }
+        }
+      }
+    },
+    "Expires %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Expire %@"
+          }
+        }
+      }
+    },
+    "Expires in": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Expire dans"
+          }
+        }
+      }
+    },
+    "Extra usage": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usage supplémentaire"
+          }
+        }
+      }
+    },
+    "Filter models": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filtrer les modèles"
+          }
+        }
+      }
+    },
+    "Forecast": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prévision"
+          }
+        }
+      }
+    },
+    "Full quota value": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valeur du quota complet"
+          }
+        }
+      }
+    },
+    "Gathering your local usage…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Collecte de ton usage local…"
+          }
+        }
+      }
+    },
+    "General": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Général"
+          }
+        }
+      }
+    },
+    "Generated images": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Images générées"
+          }
+        }
+      }
+    },
+    "Granularity": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Granularité"
+          }
+        }
+      }
+    },
+    "Group by": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grouper par"
+          }
+        }
+      }
+    },
+    "Group weekly limit usage by": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grouper l’usage de la limite hebdo par"
+          }
+        }
+      }
+    },
+    "Harness": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agent"
+          }
+        }
+      }
+    },
+    "Harness usage": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usage par agent"
+          }
+        }
+      }
+    },
+    "Hide Agent Burn from the Dock and Command-Tab. Open the dashboard and Settings from the menu bar. This choice is remembered when the app restarts.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Masque Agent Burn du Dock et de Cmd-Tab. Ouvre le tableau de bord et les Réglages depuis la barre des menus. Ce choix est conservé au redémarrage."
+          }
+        }
+      }
+    },
+    "High": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Élevé"
+          }
+        }
+      }
+    },
+    "IDE extension": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Extension IDE"
+          }
+        }
+      }
+    },
+    "Image generations": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Générations d’images"
+          }
+        }
+      }
+    },
+    "Included allowance": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allocation incluse"
+          }
+        }
+      }
+    },
+    "Included allowance is unused while promotional credits remain.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’allocation incluse n’est pas utilisée tant qu’il reste des crédits promotionnels."
+          }
+        }
+      }
+    },
+    "Input": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entrée"
+          }
+        }
+      }
+    },
+    "Input, output and cache": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entrée, sortie et cache"
+          }
+        }
+      }
+    },
+    "It resets %@.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réinitialisation %@."
+          }
+        }
+      }
+    },
+    "Keep under %@/day": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reste sous %@/jour"
+          }
+        }
+      }
+    },
+    "Last 30 days": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "30 derniers jours"
+          }
+        }
+      }
+    },
+    "Last 7 days": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "7 derniers jours"
+          }
+        }
+      }
+    },
+    "Last known quota; update pending": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dernier quota connu ; mise à jour en attente"
+          }
+        }
+      }
+    },
+    "Last known reading; update pending": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dernier relevé connu ; mise à jour en attente"
+          }
+        }
+      }
+    },
+    "Last successful update": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dernière mise à jour réussie"
+          }
+        }
+      }
+    },
+    "Latest · %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dernier · %@"
+          }
+        }
+      }
+    },
+    "Launch at login": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lancer à l’ouverture de session"
+          }
+        }
+      }
+    },
+    "Less than 1h left": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moins d’1 h restante"
+          }
+        }
+      }
+    },
+    "Limit reached": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Limite atteinte"
+          }
+        }
+      }
+    },
+    "Limit reset. A new window starts with your next request.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Limite réinitialisée. Une nouvelle fenêtre démarre à ta prochaine requête."
+          }
+        }
+      }
+    },
+    "Limit: %@ · %@%% used": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Limit: %1$@ · %2$@%% used"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Limite : %1$@ · %2$@ %% utilisé"
+          }
+        }
+      }
+    },
+    "Live Cursor credits could not be collected. The last reading is preserved.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les crédits Cursor en direct n’ont pas pu être collectés. Le dernier relevé est conservé."
+          }
+        }
+      }
+    },
+    "Live account limits are unavailable. Use Check now with live data enabled to load Claude’s meters.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les limites du compte en direct sont indisponibles. Utilise « Vérifier » avec les données en direct activées pour charger les compteurs Claude."
+          }
+        }
+      }
+    },
+    "Live quota could not be collected. The last reading is preserved.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le quota en direct n’a pas pu être collecté. Le dernier relevé est conservé."
+          }
+        }
+      }
+    },
+    "Live reading · updates every minute": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Relevé en direct · mis à jour chaque minute"
+          }
+        }
+      }
+    },
+    "Live · every minute": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En direct · chaque minute"
+          }
+        }
+      }
+    },
+    "Loading local logs and subscription limits. This can take a moment.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chargement des logs locaux et des limites d’abonnement. Cela peut prendre un moment."
+          }
+        }
+      }
+    },
+    "Loading usage history": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chargement de l’historique"
+          }
+        }
+      }
+    },
+    "Loading your subscription limits.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chargement de tes limites d’abonnement."
+          }
+        }
+      }
+    },
+    "Locked out": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bloqué"
+          }
+        }
+      }
+    },
+    "Log folders": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dossiers de logs"
+          }
+        }
+      }
+    },
+    "Logged tokens divided by API-equivalent spend.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tokens enregistrés divisés par les dépenses équivalent API."
+          }
+        }
+      }
+    },
+    "Low": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Faible"
+          }
+        }
+      }
+    },
+    "MIT licensed · Based on ccusage": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Licence MIT · Basé sur ccusage"
+          }
+        }
+      }
+    },
+    "Measured %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mesuré %@"
+          }
+        }
+      }
+    },
+    "Menu bar only": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Barre des menus uniquement"
+          }
+        }
+      }
+    },
+    "Menu bar quota": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quota dans la barre des menus"
+          }
+        }
+      }
+    },
+    "Metrics history could not be read or saved. Existing files have been preserved.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’historique des métriques n’a pas pu être lu ou enregistré. Les fichiers existants sont conservés."
+          }
+        }
+      }
+    },
+    "Mobile": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mobile"
+          }
+        }
+      }
+    },
+    "Mobile (work)": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mobile (travail)"
+          }
+        }
+      }
+    },
+    "Model": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modèle"
+          }
+        }
+      }
+    },
+    "Model breakdown": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Répartition par modèle"
+          }
+        }
+      }
+    },
+    "Model usage": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usage par modèle"
+          }
+        }
+      }
+    },
+    "Models": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modèles"
+          }
+        }
+      }
+    },
+    "Monthly": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mensuel"
+          }
+        }
+      }
+    },
+    "Monthly plan": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abonnement mensuel"
+          }
+        }
+      }
+    },
+    "Monthly plan prices": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prix mensuels des abonnements"
+          }
+        }
+      }
+    },
+    "Monthly quota value": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valeur mensuelle du quota"
+          }
+        }
+      }
+    },
+    "Monthly spend": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dépenses mensuelles"
+          }
+        }
+      }
+    },
+    "Needs attention": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À vérifier"
+          }
+        }
+      }
+    },
+    "No live reading since %@. Check that Claude Code is signed in.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun relevé en direct depuis %@. Vérifie que Claude Code est connecté."
+          }
+        }
+      }
+    },
+    "No live reading. Check that Claude Code is signed in.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun relevé en direct. Vérifie que Claude Code est connecté."
+          }
+        }
+      }
+    },
+    "No local usage in this period. Run an agent session or choose a longer range.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun usage local sur cette période. Lance une session d’agent ou choisis une période plus longue."
+          }
+        }
+      }
+    },
+    "No model usage recorded in this period.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun usage de modèle enregistré sur cette période."
+          }
+        }
+      }
+    },
+    "No quota resets recorded": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune réinitialisation enregistrée"
+          }
+        }
+      }
+    },
+    "No report available": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun rapport disponible"
+          }
+        }
+      }
+    },
+    "No spend in this period": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune dépense sur cette période"
+          }
+        }
+      }
+    },
+    "No usage found for this period. Choose a longer range and check that the harness is signed in.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun usage sur cette période. Choisis une période plus longue et vérifie que l’agent est connecté."
+          }
+        }
+      }
+    },
+    "None this cycle": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune ce cycle"
+          }
+        }
+      }
+    },
+    "Not reported": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non communiqué"
+          }
+        }
+      }
+    },
+    "Now": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maintenant"
+          }
+        }
+      }
+    },
+    "On pace": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dans le rythme"
+          }
+        }
+      }
+    },
+    "On track.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En bonne voie."
+          }
+        }
+      }
+    },
+    "On-demand limit: %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Limite à la demande : %@"
+          }
+        }
+      }
+    },
+    "On-demand spend: %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dépenses à la demande : %@"
+          }
+        }
+      }
+    },
+    "Open %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir %@"
+          }
+        }
+      }
+    },
+    "Open Login Items Settings…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir les réglages d’ouverture…"
+          }
+        }
+      }
+    },
+    "Open dashboard": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir le tableau de bord"
+          }
+        }
+      }
+    },
+    "Other": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autre"
+          }
+        }
+      }
+    },
+    "Output": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sortie"
+          }
+        }
+      }
+    },
+    "Overview": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vue d’ensemble"
+          }
+        }
+      }
+    },
+    "Pace": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rythme"
+          }
+        }
+      }
+    },
+    "Past 30 days": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "30 derniers jours"
+          }
+        }
+      }
+    },
+    "Past 30 days · API-equivalent": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "30 derniers jours · équivalent API"
+          }
+        }
+      }
+    },
+    "Period": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Période"
+          }
+        }
+      }
+    },
+    "Plan allowance, promotional credits and API-equivalent usage are different balances. Missing billing amounts are not treated as zero.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’allocation de l’abonnement, les crédits promotionnels et l’usage équivalent API sont des soldes distincts. Les montants de facturation manquants ne sont pas comptés comme zéro."
+          }
+        }
+      }
+    },
+    "Projected": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Projeté"
+          }
+        }
+      }
+    },
+    "Projected quota consumption": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Consommation de quota projetée"
+          }
+        }
+      }
+    },
+    "Projected · %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Projeté · %@"
+          }
+        }
+      }
+    },
+    "Promotional credits": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crédits promotionnels"
+          }
+        }
+      }
+    },
+    "Quit": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quitter"
+          }
+        }
+      }
+    },
+    "Quit Agent Burn": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quitter Agent Burn"
+          }
+        }
+      }
+    },
+    "Quota chart range": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Période du graphique de quota"
+          }
+        }
+      }
+    },
+    "Quota collection could not save its readings. Existing history is preserved.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La collecte n’a pas pu enregistrer ses relevés. L’historique existant est conservé."
+          }
+        }
+      }
+    },
+    "Quota forecast": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prévision de quota"
+          }
+        }
+      }
+    },
+    "Quota history could not be read. The last available readings are preserved.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’historique des quotas n’a pas pu être lu. Les derniers relevés disponibles sont conservés."
+          }
+        }
+      }
+    },
+    "Quota history could not be saved. Existing readings are preserved.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’historique des quotas n’a pas pu être enregistré. Les relevés existants sont conservés."
+          }
+        }
+      }
+    },
+    "Quota remaining": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quota restant"
+          }
+        }
+      }
+    },
+    "Quota shown in the menu bar": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quota affiché dans la barre des menus"
+          }
+        }
+      }
+    },
+    "Quota unavailable": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quota indisponible"
+          }
+        }
+      }
+    },
+    "Quota unavailable. Spend and token history are still shown above.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quota indisponible. Les dépenses et l’historique des tokens restent affichés au-dessus."
+          }
+        }
+      }
+    },
+    "Quota value / plan price": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valeur du quota / prix de l’abonnement"
+          }
+        }
+      }
+    },
+    "Quota value estimate": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimation de la valeur du quota"
+          }
+        }
+      }
+    },
+    "Reading harness usage…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lecture de l’usage de l’agent…"
+          }
+        }
+      }
+    },
+    "Reading usage…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lecture de l’usage…"
+          }
+        }
+      }
+    },
+    "Reading your usage…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lecture de ton usage…"
+          }
+        }
+      }
+    },
+    "Recorded": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistré"
+          }
+        }
+      }
+    },
+    "Recorded remaining minus even pace at the latest reading.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restant enregistré moins le rythme régulier au dernier relevé."
+          }
+        }
+      }
+    },
+    "Recorded resets": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réinitialisations enregistrées"
+          }
+        }
+      }
+    },
+    "Records live Codex, Claude, and Cursor promotional-credit quotas even after you quit Agent Burn. Collection resumes when your Mac wakes or you sign in. Saved readings remain available during outages.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistre les quotas Codex, Claude et les crédits promotionnels Cursor même après avoir quitté Agent Burn. La collecte reprend au réveil du Mac ou à l’ouverture de session. Les relevés enregistrés restent disponibles pendant les coupures."
+          }
+        }
+      }
+    },
+    "Recovered model history · %lld models": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Historique des modèles récupéré · %lld modèles"
+          }
+        }
+      }
+    },
+    "Refresh": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actualiser"
+          }
+        }
+      }
+    },
+    "Refresh usage": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actualiser l’usage"
+          }
+        }
+      }
+    },
+    "Refresh usage and live quotas (⌘R)": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actualiser l’usage et les quotas en direct (⌘R)"
+          }
+        }
+      }
+    },
+    "Refreshing…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actualisation…"
+          }
+        }
+      }
+    },
+    "Remaining": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restant"
+          }
+        }
+      }
+    },
+    "Remaining now minus an even pace until reset.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restant actuel moins un rythme régulier jusqu’à la réinitialisation."
+          }
+        }
+      }
+    },
+    "Remaining quota": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quota restant"
+          }
+        }
+      }
+    },
+    "Remaining quota divided by the time until reset.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quota restant divisé par le temps avant réinitialisation."
+          }
+        }
+      }
+    },
+    "Renews %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Renouvellement %@"
+          }
+        }
+      }
+    },
+    "Reset": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réinitialisé"
+          }
+        }
+      }
+    },
+    "Reset in": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réinitialisation dans"
+          }
+        }
+      }
+    },
+    "Reset to date": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Depuis la réinitialisation"
+          }
+        }
+      }
+    },
+    "Reset to today": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "De la réinitialisation à aujourd’hui"
+          }
+        }
+      }
+    },
+    "Resets": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réinitialisations"
+          }
+        }
+      }
+    },
+    "Resets %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réinitialisation %@"
+          }
+        }
+      }
+    },
+    "Resets around": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réinitialisation vers"
+          }
+        }
+      }
+    },
+    "Resets in ": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réinitialisation dans "
+          }
+        }
+      }
+    },
+    "Room to keep building": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "De la marge pour continuer"
+          }
+        }
+      }
+    },
+    "Saved reading": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Relevé enregistré"
+          }
+        }
+      }
+    },
+    "Saved usage": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usage enregistré"
+          }
+        }
+      }
+    },
+    "Scheduled resets happen near the cycle end. A possible reset is a remaining jump mid-cycle, which can be a manual reset or a provider correction.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les réinitialisations prévues ont lieu vers la fin du cycle. Une réinitialisation possible est un saut du restant en milieu de cycle : réinitialisation manuelle ou correction du fournisseur."
+          }
+        }
+      }
+    },
+    "Series": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Séries"
+          }
+        }
+      }
+    },
+    "Session": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Session"
+          }
+        }
+      }
+    },
+    "Settings": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réglages"
+          }
+        }
+      }
+    },
+    "Share": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Part"
+          }
+        }
+      }
+    },
+    "Share of the weekly limit consumed each day, as reported by ChatGPT’s Codex usage dashboard.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Part de la limite hebdo consommée chaque jour, d’après le tableau de bord d’usage Codex de ChatGPT."
+          }
+        }
+      }
+    },
+    "Show remaining": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher le restant"
+          }
+        }
+      }
+    },
+    "Showing the last known reading. Update pending.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Affichage du dernier relevé connu. Mise à jour en attente."
+          }
+        }
+      }
+    },
+    "Sign in to %@ and run a session, then refresh.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connecte-toi à %@ et lance une session, puis actualise."
+          }
+        }
+      }
+    },
+    "Sign in to this harness and run a session to record limits. Your available spend data appears below.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connecte-toi à cet agent et lance une session pour enregistrer les limites. Tes données de dépenses disponibles apparaissent ci-dessous."
+          }
+        }
+      }
+    },
+    "Signed updates are delivered from the open-source GitHub releases.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les mises à jour signées proviennent des releases GitHub open source."
+          }
+        }
+      }
+    },
+    "Slow to %@/h": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ralentis à %@/h"
+          }
+        }
+      }
+    },
+    "Snapshot: %@ – %@. Current-cycle model data is shown above.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Snapshot: %1$@ – %2$@. Current-cycle model data is shown above."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Instantané : %1$@ – %2$@. Les données du cycle en cours sont affichées au-dessus."
+          }
+        }
+      }
+    },
+    "Source code": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Code source"
+          }
+        }
+      }
+    },
+    "Spend": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dépenses"
+          }
+        }
+      }
+    },
+    "Spend by token type": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dépenses par type de token"
+          }
+        }
+      }
+    },
+    "Spend granularity": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Granularité des dépenses"
+          }
+        }
+      }
+    },
+    "Spend is API-equivalent usage, not your subscription bill.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les dépenses sont en équivalent API, pas ta facture d’abonnement."
+          }
+        }
+      }
+    },
+    "Spend period": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Période de dépenses"
+          }
+        }
+      }
+    },
+    "Spend, tokens and subscription limits for your coding agents. Usage is read from local logs and never sent to an Agent Burn service.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dépenses, tokens et limites d’abonnement de tes agents de code. L’usage est lu depuis les logs locaux et n’est jamais envoyé à un service Agent Burn."
+          }
+        }
+      }
+    },
+    "Stale · waiting for update": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Périmé · en attente de mise à jour"
+          }
+        }
+      }
+    },
+    "Start": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Début"
+          }
+        }
+      }
+    },
+    "Start Agent Burn automatically when you sign in to your Mac. Your menu-bar-only preference is respected.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Démarre Agent Burn automatiquement à l’ouverture de session. Ta préférence « barre des menus uniquement » est respectée."
+          }
+        }
+      }
+    },
+    "Started %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Commencé %@"
+          }
+        }
+      }
+    },
+    "Startup": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Démarrage"
+          }
+        }
+      }
+    },
+    "Subscription": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abonnement"
+          }
+        }
+      }
+    },
+    "Subscription economics, token costs and weekly trends": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rentabilité de l’abonnement, coût des tokens et tendances hebdo"
+          }
+        }
+      }
+    },
+    "Subscription usage": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usage de l’abonnement"
+          }
+        }
+      }
+    },
+    "Subscription value": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valeur de l’abonnement"
+          }
+        }
+      }
+    },
+    "Subscriptions": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abonnements"
+          }
+        }
+      }
+    },
+    "Suggested daily pace": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rythme quotidien conseillé"
+          }
+        }
+      }
+    },
+    "Suggested pace": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rythme conseillé"
+          }
+        }
+      }
+    },
+    "Surface": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Surface"
+          }
+        }
+      }
+    },
+    "The CLI returned an unsupported report. Rebuild the app with the current Agent Burn CLI.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le CLI a renvoyé un rapport non pris en charge. Recompile l’app avec le CLI Agent Burn actuel."
+          }
+        }
+      }
+    },
+    "The chart appears after the next live reading.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le graphique apparaîtra après le prochain relevé en direct."
+          }
+        }
+      }
+    },
+    "The flame in the menu bar and the window toolbar show this remaining percentage. Codex uses the live weekly account meter, Claude uses its weekly limit, and Cursor uses promotional credits while those remain, otherwise the included allowance.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La flamme dans la barre des menus et la barre d’outils affichent ce pourcentage restant. Codex utilise le compteur hebdo en direct, Claude sa limite hebdo, et Cursor les crédits promotionnels tant qu’il en reste, sinon l’allocation incluse."
+          }
+        }
+      }
+    },
+    "This month": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce mois-ci"
+          }
+        }
+      }
+    },
+    "Time left before promotional credits expire.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Temps restant avant l’expiration des crédits promotionnels."
+          }
+        }
+      }
+    },
+    "Time left in this weekly limit window.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Temps restant dans cette fenêtre de limite hebdo."
+          }
+        }
+      }
+    },
+    "Today": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aujourd’hui"
+          }
+        }
+      }
+    },
+    "Token breakdown": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Répartition des tokens"
+          }
+        }
+      }
+    },
+    "Tokens": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tokens"
+          }
+        }
+      }
+    },
+    "Top models": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modèles les plus utilisés"
+          }
+        }
+      }
+    },
+    "Total spend": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dépenses totales"
+          }
+        }
+      }
+    },
+    "USD": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "USD"
+          }
+        }
+      }
+    },
+    "Unable to save report history on this Mac.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d’enregistrer l’historique des rapports sur ce Mac."
+          }
+        }
+      }
+    },
+    "Unavailable": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Indisponible"
+          }
+        }
+      }
+    },
+    "Unknown plan": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abonnement inconnu"
+          }
+        }
+      }
+    },
+    "Until reset": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jusqu’à la réinitialisation"
+          }
+        }
+      }
+    },
+    "Update failed · retrying": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Échec de la mise à jour · nouvelle tentative"
+          }
+        }
+      }
+    },
+    "Updated": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mis à jour"
+          }
+        }
+      }
+    },
+    "Updated %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mis à jour %@"
+          }
+        }
+      }
+    },
+    "Updates": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mises à jour"
+          }
+        }
+      }
+    },
+    "Updating usage": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mise à jour de l’usage"
+          }
+        }
+      }
+    },
+    "Updating usage…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mise à jour de l’usage…"
+          }
+        }
+      }
+    },
+    "Usage": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usage"
+          }
+        }
+      }
+    },
+    "Usage / monthly price": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usage / prix mensuel"
+          }
+        }
+      }
+    },
+    "Usage could not be updated in time. Please try again shortly.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’usage n’a pas pu être mis à jour à temps. Réessaie dans un instant."
+          }
+        }
+      }
+    },
+    "Usage details": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Détails d’usage"
+          }
+        }
+      }
+    },
+    "Use cached pricing and limits": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utiliser les tarifs et limites en cache"
+          }
+        }
+      }
+    },
+    "Used": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utilisé"
+          }
+        }
+      }
+    },
+    "Version %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version %@"
+          }
+        }
+      }
+    },
+    "Waiting for usage": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En attente d’usage"
+          }
+        }
+      }
+    },
+    "Website": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Site web"
+          }
+        }
+      }
+    },
+    "Week to date": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Semaine en cours"
+          }
+        }
+      }
+    },
+    "Weekly": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hebdo"
+          }
+        }
+      }
+    },
+    "Weekly limit": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Limite hebdo"
+          }
+        }
+      }
+    },
+    "Weekly limit used per day": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Limite hebdo utilisée par jour"
+          }
+        }
+      }
+    },
+    "Weekly quota": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quota hebdo"
+          }
+        }
+      }
+    },
+    "Weekly remaining": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restant hebdo"
+          }
+        }
+      }
+    },
+    "Weekly spend": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dépenses hebdo"
+          }
+        }
+      }
+    },
+    "Weekly trend": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tendance hebdo"
+          }
+        }
+      }
+    },
+    "Year to date": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Année en cours"
+          }
+        }
+      }
+    },
+    "Yesterday": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hier"
+          }
+        }
+      }
+    },
+    "Your current pace should carry you through the reset.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ton rythme actuel devrait tenir jusqu’à la réinitialisation."
+          }
+        }
+      }
+    },
+    "Your usage will appear here when it is ready.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ton usage apparaîtra ici dès qu’il sera prêt."
+          }
+        }
+      }
+    },
+    "account": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "compte"
+          }
+        }
+      }
+    },
+    "ago": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "plus tôt"
+          }
+        }
+      }
+    },
+    "banked": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "en réserve"
+          }
+        }
+      }
+    },
+    "even pace": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "rythme régulier"
+          }
+        }
+      }
+    },
+    "left": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "restant"
+          }
+        }
+      }
+    },
+    "of %@ limit": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "sur une limite de %@"
+          }
+        }
+      }
+    },
+    "pace": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "rythme"
+          }
+        }
+      }
+    },
+    "remaining": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "restant"
+          }
+        }
+      }
+    },
+    "remaining of %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "restant sur %@"
+          }
+        }
+      }
+    },
+    "since %@": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "depuis %@"
+          }
+        }
+      }
+    },
+    "unknown": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "inconnu"
+          }
+        }
+      }
+    },
+    "~%@ at reset": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "~%@ à la réinitialisation"
+          }
+        }
+      }
+    },
+    "·": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "·"
+          }
+        }
+      }
+    },
+    "−%@ pts behind": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "−%@ pts de retard"
+          }
+        }
+      }
+    },
+    "−%@%% behind": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "−%@ %% de retard"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

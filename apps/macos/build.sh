@@ -53,8 +53,14 @@ ditto "$bin/AgentBurn_AgentBurn.bundle" "$app/Contents/Resources/AgentBurn_Agent
 ditto "$bin/Sparkle.framework" "$app/Contents/Frameworks/Sparkle.framework"
 install_name_tool -add_rpath '@executable_path/../Frameworks' "$app/Contents/MacOS/AgentBurn"
 # Finder and the running app use the exact same packaged artwork.
-cp "$app/Contents/Resources/AgentBurn_AgentBurn.bundle/AppIcon.icns" "$app/Contents/Resources/AppIcon.icns"
+# Newer SwiftPM builds nest resources under Contents/Resources inside the bundle.
+icon="$app/Contents/Resources/AgentBurn_AgentBurn.bundle/AppIcon.icns"
+[[ -e "$icon" ]] || icon="$app/Contents/Resources/AgentBurn_AgentBurn.bundle/Contents/Resources/AppIcon.icns"
+cp "$icon" "$app/Contents/Resources/AppIcon.icns"
 cp ../../LICENSE "$app/Contents/Resources/LICENSE.txt"
+# SwiftUI looks up interface strings in the main bundle, one .lproj per language.
+xcrun xcstringstool compile Localization/Localizable.xcstrings --output-directory "$app/Contents/Resources"
+mkdir -p "$app/Contents/Resources/en.lproj"
 cp .build/checkouts/Sparkle/LICENSE "$app/Contents/Resources/Sparkle-LICENSE.txt"
 cat > "$app/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -64,6 +70,8 @@ cat > "$app/Contents/Info.plist" <<PLIST
 <key>CFBundleName</key><string>Agent Burn</string>
 <key>CFBundleDisplayName</key><string>Agent Burn</string>
 <key>CFBundleExecutable</key><string>AgentBurn</string>
+<key>CFBundleDevelopmentRegion</key><string>en</string>
+<key>CFBundleLocalizations</key><array><string>en</string><string>fr</string></array>
 <key>CFBundleIconFile</key><string>AppIcon</string>
 <key>CFBundlePackageType</key><string>APPL</string>
 <key>CFBundleShortVersionString</key><string>$version</string>

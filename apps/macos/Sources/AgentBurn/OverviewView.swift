@@ -15,14 +15,16 @@ struct OverviewView: View {
       if let report = store.summary {
         HStack(spacing: 10) {
           MetricTile(
-            title: "Spend", value: currency(report.totals.totalCost),
-            detail: "API-equivalent · \(store.period.label)", symbol: "dollarsign",
+            title: String(localized: "Spend"), value: currency(report.totals.totalCost),
+            detail: String(localized: "API-equivalent · \(store.period.label)"),
+            symbol: "dollarsign",
             compact: true
           )
           .burnCard(padding: 12, radius: 12)
           MetricTile(
-            title: "Tokens", value: tokens(report.totals.totalTokens),
-            detail: "\(report.agents.count) agents", symbol: "square.stack.3d.up.fill",
+            title: String(localized: "Tokens"), value: tokens(report.totals.totalTokens),
+            detail: String(localized: "\(report.agents.count) agents"),
+            symbol: "square.stack.3d.up.fill",
             tint: .blue, compact: true
           )
           .burnCard(padding: 12, radius: 12)
@@ -31,7 +33,7 @@ struct OverviewView: View {
         busiest(report)
         if !report.models.isEmpty {
           VStack(alignment: .leading, spacing: 10) {
-            CardHeader(title: "Top models", symbol: "cpu", tint: .purple) {
+            CardHeader(title: String(localized: "Top models"), symbol: "cpu", tint: .purple) {
               Text("\(report.models.count) models")
             }
             ForEach(Array(report.models.prefix(3))) { model in
@@ -81,7 +83,9 @@ struct OverviewView: View {
     }
     if !quotas.isEmpty {
       VStack(alignment: .leading, spacing: 10) {
-        CardHeader(title: "Quota remaining", symbol: "gauge.with.dots.needle.67percent", tint: .green)
+        CardHeader(
+          title: String(localized: "Quota remaining"), symbol: "gauge.with.dots.needle.67percent",
+          tint: .green)
         HStack(spacing: 8) {
           ForEach(quotas, id: \.0) { source, remaining in
             quotaTile(source, remaining: remaining)
@@ -123,7 +127,7 @@ struct OverviewView: View {
     let agents = Array(report.agents.sorted { $0.totalCost > $1.totalCost }.prefix(6))
     let top = max(agents.first?.totalCost ?? 0, 0.01)
     return VStack(alignment: .leading, spacing: 6) {
-      CardHeader(title: "Busiest agents", symbol: "flame.fill") {
+      CardHeader(title: String(localized: "Busiest agents"), symbol: "flame.fill") {
         Text(store.period.label)
       }
       .padding(.bottom, 4)

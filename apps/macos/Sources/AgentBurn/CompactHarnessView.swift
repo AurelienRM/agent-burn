@@ -19,7 +19,7 @@ struct CompactHarnessView: View {
           stale: !forecast.isFresh(at: store.quotaCheckDate)
             || store.quotaError(for: agent) != nil,
           staleHelp: store.quotaError(for: agent)
-            ?? "Showing the last known reading. Update pending.",
+            ?? String(localized: "Showing the last known reading. Update pending."),
           compact: true,
           availableResets: store.reports[agent]?.resetCreditsAvailable,
           rates: store.blendRates(for: agent)
@@ -34,10 +34,11 @@ struct CompactHarnessView: View {
           if let short = store.summary?.subscription?.agents.first(where: { $0.agent == agent })?
             .shortWindow
           {
+            let remaining = max(0, 100 - short.usedPercent)
+              .formatted(.number.precision(.fractionLength(0)))
             detail(
-              "\(short.label) limit",
-              "\(max(0, 100 - short.usedPercent).formatted(.number.precision(.fractionLength(0))))% remaining"
-            )
+              String(localized: "\(short.label) limit"),
+              String(localized: "\(remaining)% remaining"))
           }
         }
         .burnCard(padding: 14, radius: 12)
@@ -67,19 +68,23 @@ struct CompactHarnessView: View {
         let rates = store.blendRates(for: agent)
         DisclosureGroup("Usage details", isExpanded: $showsDetails) {
           VStack(alignment: .leading, spacing: 12) {
-            detail("API-equivalent · 30 days", currency(report.apiEquivalentPerMonth))
-            if let price = report.pricePerMonth { detail("Monthly plan", currency(price)) }
+            detail(
+              String(localized: "API-equivalent · 30 days"),
+              currency(report.apiEquivalentPerMonth))
+            if let price = report.pricePerMonth {
+              detail(String(localized: "Monthly plan"), currency(price))
+            }
             if let forecast = store.forecast(for: agent) {
+              let daily = forecast.dailyAllowance.formatted(.number.precision(.fractionLength(1)))
               detail(
-                "Suggested daily pace",
-                "\(forecast.dailyAllowance.formatted(.number.precision(.fractionLength(1))))%\u{00A0}/ day"
-              )
+                String(localized: "Suggested daily pace"),
+                String(localized: "\(daily)%\u{00A0}/ day"))
             }
             if let dollars = quotaDollarsPerPercentLabel(rates?.dollarsPerPercent) {
-              detail("Avg $ / %", dollars)
+              detail(String(localized: "Avg $ / %"), dollars)
             }
             if let tokensPer = quotaTokensPerUnitLabel(rates?.tokensPerDollar, unit: "$") {
-              detail("Avg tokens / $", tokensPer)
+              detail(String(localized: "Avg tokens / $"), tokensPer)
             }
             ForEach(Array(report.topModels.prefix(2))) { model in
               detail(model.model, currency(model.cost))
@@ -97,7 +102,7 @@ struct CompactHarnessView: View {
       HarnessIcon(agent: agent, size: 22)
       Text(harnessName(agent)).font(.system(size: 13, weight: .semibold))
       Spacer()
-      Text(store.reports[agent]?.plan ?? "Subscription")
+      Text(store.reports[agent]?.plan ?? String(localized: "Subscription"))
         .font(.system(size: 11, weight: .medium)).foregroundStyle(BurnTheme.quotaMuted)
         .lineLimit(1)
         .padding(.horizontal, 8).padding(.vertical, 3)

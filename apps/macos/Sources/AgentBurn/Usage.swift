@@ -136,8 +136,8 @@ enum CursorModelScope: String, CaseIterable, Identifiable {
   var id: String { rawValue }
   var label: String {
     switch self {
-    case .allModels: "All models"
-    case .cursorModels: "Cursor models"
+    case .allModels: String(localized: "All models")
+    case .cursorModels: String(localized: "Cursor models")
     }
   }
 }
@@ -147,16 +147,16 @@ enum SpendGranularity: String, CaseIterable, Identifiable {
   var id: String { rawValue }
   var label: String {
     switch self {
-    case .daily: "Daily"
-    case .weekly: "Weekly"
-    case .monthly: "Monthly"
+    case .daily: String(localized: "Daily")
+    case .weekly: String(localized: "Weekly")
+    case .monthly: String(localized: "Monthly")
     }
   }
   var spendTitle: String {
     switch self {
-    case .daily: "Daily spend"
-    case .weekly: "Weekly spend"
-    case .monthly: "Monthly spend"
+    case .daily: String(localized: "Daily spend")
+    case .weekly: String(localized: "Weekly spend")
+    case .monthly: String(localized: "Monthly spend")
     }
   }
   var unit: Calendar.Component {
@@ -276,26 +276,26 @@ enum QuotaMeterStyle {
   case weekly, promotionalCredits
   var title: String {
     switch self {
-    case .weekly: "Weekly quota"
-    case .promotionalCredits: "Promotional credits"
+    case .weekly: String(localized: "Weekly quota")
+    case .promotionalCredits: String(localized: "Promotional credits")
     }
   }
   var remainingCaption: String {
     switch self {
-    case .weekly: "Weekly remaining"
-    case .promotionalCredits: "Credits remaining"
+    case .weekly: String(localized: "Weekly remaining")
+    case .promotionalCredits: String(localized: "Credits remaining")
     }
   }
   var resetTitle: String {
     switch self {
-    case .weekly: "Reset in"
-    case .promotionalCredits: "Expires in"
+    case .weekly: String(localized: "Reset in")
+    case .promotionalCredits: String(localized: "Expires in")
     }
   }
   var resetHelp: String {
     switch self {
-    case .weekly: "Time left in this weekly limit window."
-    case .promotionalCredits: "Time left before promotional credits expire."
+    case .weekly: String(localized: "Time left in this weekly limit window.")
+    case .promotionalCredits: String(localized: "Time left before promotional credits expire.")
     }
   }
   var usedHelp: String {
@@ -308,8 +308,8 @@ enum QuotaMeterStyle {
   }
   var chartResetLabel: String {
     switch self {
-    case .weekly: "Reset"
-    case .promotionalCredits: "Expires"
+    case .weekly: String(localized: "Reset")
+    case .promotionalCredits: String(localized: "Expires")
     }
   }
 }
@@ -330,9 +330,10 @@ struct Forecast {
     return isLive && window.isValid && age >= 0 && age <= 90 && date < reset
   }
   func freshnessLabel(at date: Date, failed: Bool = false) -> String {
-    if failed { return "Update failed · retrying" }
-    if !isLive { return "Saved reading" }
-    return isFresh(at: date) ? "Live · every minute" : "Stale · waiting for update"
+    if failed { return String(localized: "Update failed · retrying") }
+    if !isLive { return String(localized: "Saved reading") }
+    return isFresh(at: date)
+      ? String(localized: "Live · every minute") : String(localized: "Stale · waiting for update")
   }
   var remaining: Double { max(0, min(100, 100 - window.usedPercent)) }
   var duration: TimeInterval { max(1, window.windowMinutes * 60) }
@@ -367,11 +368,11 @@ enum QuotaChartRange: String, CaseIterable, Identifiable {
   var id: String { rawValue }
   var label: String {
     switch self {
-    case .rte: "Until reset"
-    case .rtd: "Reset to today"
-    case .today: "Today"
-    case .week: "Last 7 days"
-    case .month: "Last 30 days"
+    case .rte: String(localized: "Until reset")
+    case .rtd: String(localized: "Reset to today")
+    case .today: String(localized: "Today")
+    case .week: String(localized: "Last 7 days")
+    case .month: String(localized: "Last 30 days")
     }
   }
   var connectsRecordedGaps: Bool { true }
@@ -605,9 +606,10 @@ private func quotaChartDeltaPoints(samples: [QuotaSample], forecast: Forecast)
 
 func quotaChartDeltaText(_ delta: Double?) -> String? {
   guard let delta else { return nil }
-  if abs(delta) < 0.05 { return "On pace" }
+  if abs(delta) < 0.05 { return String(localized: "On pace") }
   let magnitude = abs(delta).formatted(.number.precision(.fractionLength(1)))
-  return delta > 0 ? "+\(magnitude)% ahead" : "−\(magnitude)% behind"
+  return delta > 0
+    ? String(localized: "+\(magnitude)% ahead") : String(localized: "−\(magnitude)% behind")
 }
 
 func quotaChartStep(from date: Date, forward: Bool, marks: [Date], domain: ClosedRange<Date>)
@@ -708,22 +710,24 @@ func quotaUsedPercent(_ forecast: Forecast) -> Double {
 }
 
 func quotaLimitSummary(_ forecast: Forecast) -> String {
-  "Limit: \(quotaDateText(forecast.start)) · \(quotaUsedPercent(forecast).formatted(.number.precision(.fractionLength(0))))% used"
+  let used = quotaUsedPercent(forecast).formatted(.number.precision(.fractionLength(0)))
+  return String(localized: "Limit: \(quotaDateText(forecast.start)) · \(used)% used")
 }
 
 func quotaTimeLeft(_ forecast: Forecast, now: Date) -> String {
   let seconds = max(0, forecast.reset.timeIntervalSince(min(now, forecast.reset)))
   let days = Int(seconds / 86_400)
   let hours = Int((seconds - Double(days) * 86_400) / 3_600)
-  if days > 0 && hours > 0 { return "\(days)d \(hours)h" }
-  if days > 0 { return "\(days)d" }
-  if hours > 0 { return "\(hours)h" }
-  return "<1h"
+  if days > 0 && hours > 0 { return String(localized: "\(days)d \(hours)h") }
+  if days > 0 { return String(localized: "\(days)d") }
+  if hours > 0 { return String(localized: "\(hours)h") }
+  return String(localized: "<1h")
 }
 
 func quotaTimeRemaining(_ forecast: Forecast, now: Date) -> String {
   let left = quotaTimeLeft(forecast, now: now)
-  return left == "<1h" ? "Less than 1h left" : "\(left) left"
+  return left == String(localized: "<1h")
+    ? String(localized: "Less than 1h left") : String(localized: "\(left) left")
 }
 
 func quotaChartDrawnSamples(
@@ -804,29 +808,32 @@ func quotaResetCounts(_ resets: [QuotaReset]) -> QuotaResetCounts {
 
 func quotaAvailableResetsLabel(_ count: Int?) -> String? {
   guard let count else { return nil }
-  return count == 1 ? "1 reset available" : "\(count) resets available"
+  return count == 1
+    ? String(localized: "1 reset available") : String(localized: "\(count) resets available")
 }
 
 func quotaCompactStats(_ forecast: Forecast, availableResets: Int? = nil) -> String {
-  let used =
-    "\(quotaUsedPercent(forecast).formatted(.number.precision(.fractionLength(1))))% used"
-  let daily =
-    "\(forecast.dailyAllowance.formatted(.number.precision(.fractionLength(1))))%\u{00A0}/ day"
+  let usedValue = quotaUsedPercent(forecast).formatted(.number.precision(.fractionLength(1)))
+  let used = String(localized: "\(usedValue)% used")
+  let dailyValue = forecast.dailyAllowance.formatted(.number.precision(.fractionLength(1)))
+  let daily = String(localized: "\(dailyValue)%\u{00A0}/ day")
   guard let resets = quotaAvailableResetsLabel(availableResets) else { return "\(used) · \(daily)" }
   return "\(used) · \(daily) · \(resets)"
 }
 
 func quotaResetDetail(_ counts: QuotaResetCounts) -> String {
-  if counts.recorded == 0 { return "None this cycle" }
-  if counts.scheduled == 0 { return "\(counts.possible) possible" }
-  if counts.possible == 0 { return "\(counts.scheduled) scheduled" }
-  return "\(counts.scheduled) scheduled · \(counts.possible) possible"
+  if counts.recorded == 0 { return String(localized: "None this cycle") }
+  if counts.scheduled == 0 { return String(localized: "\(counts.possible) possible") }
+  if counts.possible == 0 { return String(localized: "\(counts.scheduled) scheduled") }
+  return String(localized: "\(counts.scheduled) scheduled · \(counts.possible) possible")
 }
 
 func resetSummary(_ resets: [QuotaReset]) -> String {
   let counts = quotaResetCounts(resets)
-  guard counts.recorded > 0 else { return "No quota resets recorded" }
-  return "\(counts.recorded) recorded · \(counts.scheduled) scheduled, \(counts.possible) possible"
+  guard counts.recorded > 0 else { return String(localized: "No quota resets recorded") }
+  return String(
+    localized:
+      "\(counts.recorded) recorded · \(counts.scheduled) scheduled, \(counts.possible) possible")
 }
 
 enum QuotaSource: String, CaseIterable, Identifiable {
@@ -954,7 +961,7 @@ private func cursorGrantUsedPercent(_ account: CursorAccount) -> Double? {
 }
 
 func menuBarQuotaText(_ remaining: Double?, stale: Bool = false) -> String {
-  remaining.map { "\(Int($0))%" + (stale ? " · stale" : "") } ?? "Burn"
+  remaining.map { stale ? String(localized: "\(Int($0))% · stale") : "\(Int($0))%" } ?? "Burn"
 }
 
 func appVersionText(short: String, build: String = "") -> String {

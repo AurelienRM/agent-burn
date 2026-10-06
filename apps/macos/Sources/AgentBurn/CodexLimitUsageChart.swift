@@ -23,7 +23,9 @@ struct LimitUsageModel: Codable, Sendable {
 enum LimitUsageGrouping: String, CaseIterable, Identifiable {
   case surface, model
   var id: String { rawValue }
-  var label: String { self == .surface ? "Surface" : "Model" }
+  var label: String {
+    self == .surface ? String(localized: "Surface") : String(localized: "Model")
+  }
 }
 
 struct LimitUsageSegment: Identifiable, Equatable {
@@ -35,32 +37,32 @@ struct LimitUsageSegment: Identifiable, Equatable {
 }
 
 private let limitUsageSeriesLimit = 5
-let limitUsageOtherSeries = "Other"
+let limitUsageOtherSeries = String(localized: "Other")
 
 func limitUsageSurfaceLabel(_ surface: String) -> String {
   switch surface {
   case "cli": "CLI"
   case "exec": "Exec"
-  case "desktop_app": "Desktop app"
-  case "work_desktop": "Desktop app (work)"
-  case "vscode": "IDE extension"
+  case "desktop_app": String(localized: "Desktop app")
+  case "work_desktop": String(localized: "Desktop app (work)")
+  case "vscode": String(localized: "IDE extension")
   case "jetbrains": "JetBrains"
-  case "web": "Cloud"
-  case "work_web": "Cloud (work)"
-  case "mobile": "Mobile"
-  case "work_mobile": "Mobile (work)"
+  case "web": String(localized: "Cloud")
+  case "work_web": String(localized: "Cloud (work)")
+  case "mobile": String(localized: "Mobile")
+  case "work_mobile": String(localized: "Mobile (work)")
   case "github": "GitHub"
-  case "github_code_review": "Code review"
+  case "github_code_review": String(localized: "Code review")
   case "slack": "Slack"
   case "linear": "Linear"
   case "sdk": "SDK"
-  case "agent_identity": "Agent identity"
+  case "agent_identity": String(localized: "Agent identity")
   default: limitUsageOtherSeries
   }
 }
 
 func limitUsageModelLabel(_ model: LimitUsageModel) -> String {
-  model.speed == "fast" ? model.model + " fast" : model.model
+  model.speed == "fast" ? String(localized: "\(model.model) fast") : model.model
 }
 
 /// Stacked segments per day, keeping the largest series over the period and
@@ -129,8 +131,11 @@ struct CodexLimitUsageChart: View {
         .pickerStyle(.segmented).frame(width: 160).labelsHidden()
         .accessibilityLabel("Group weekly limit usage by")
         Spacer()
-        Text(selectedDay.map(tooltip) ?? "\(percentLabel(total)) over \(days.count) days")
-          .font(.caption).foregroundStyle(.secondary).lineLimit(1)
+        Text(
+          selectedDay.map(tooltip)
+            ?? String(localized: "\(percentLabel(total)) over \(days.count) days")
+        )
+        .font(.caption).foregroundStyle(.secondary).lineLimit(1)
       }
       Chart {
         ForEach(segments) { segment in

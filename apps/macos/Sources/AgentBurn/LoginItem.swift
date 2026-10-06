@@ -38,7 +38,8 @@ import SwiftUI
     do {
       if enabled { try register() } else { try await unregister() }
     } catch {
-      errorMessage = "Could not change login behavior: \(error.localizedDescription)"
+      errorMessage = String(
+        localized: "Could not change login behavior: \(error.localizedDescription)")
     }
   }
 }

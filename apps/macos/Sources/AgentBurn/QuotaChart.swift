@@ -12,7 +12,7 @@ struct QuotaChart: View {
   var compact = false
   var range = QuotaChartRange.rte
   var now = Date.now
-  var resetLabel = "Reset"
+  var resetLabel = String(localized: "Reset")
   var height: CGFloat? = nil
   /// Beside a full summary, the idle badge only repeats the hero numbers.
   var idleBadge: Bool? = nil
@@ -188,8 +188,8 @@ struct QuotaChart: View {
     ) {
       Text(
         runsOut
-          ? "Empty " + quotaChartRunOutLabel(forecast)
-          : "~" + quotaPercentText(forecast.projectedRemaining) + " at reset"
+          ? String(localized: "Empty \(quotaChartRunOutLabel(forecast))")
+          : String(localized: "~\(quotaPercentText(forecast.projectedRemaining)) at reset")
       )
       .font(.system(size: 11, weight: .semibold)).monospacedDigit()
       .foregroundStyle(stroke)
@@ -383,7 +383,7 @@ struct QuotaChart: View {
   private func badgeDelta(_ delta: Double?) -> String? {
     guard let delta else { return nil }
     if compact {
-      if abs(delta) < 0.05 { return "pace" }
+      if abs(delta) < 0.05 { return String(localized: "pace") }
       let magnitude = abs(delta).formatted(.number.precision(.fractionLength(1)))
       return delta > 0 ? "+\(magnitude)%" : "−\(magnitude)%"
     }
@@ -407,12 +407,15 @@ struct QuotaChart: View {
 
   private var cursorLabel: some View {
     let date = quotaChartCursorLabel(cursor, range: range)
-    let prefix = reading.projected ? "Projected · " : selected == nil ? "Latest · " : ""
+    let full =
+      reading.projected
+      ? String(localized: "Projected · \(date)")
+      : selected == nil ? String(localized: "Latest · \(date)") : date
     let short =
       range == .today
       ? date : cursor.formatted(.dateTime.month(.defaultDigits).day().hour())
     return ViewThatFits(in: .horizontal) {
-      cursorText(prefix + date).fixedSize()
+      cursorText(full).fixedSize()
       cursorText(date).fixedSize()
       cursorText(short).fixedSize()
       cursorText(short).minimumScaleFactor(0.8)
@@ -441,18 +444,26 @@ struct QuotaChart: View {
 
   private var headerSeries: some View {
     HStack(alignment: .firstTextBaseline, spacing: 12) {
-      series("Recorded", reading.recorded, color: cursorStroke, dashed: false)
-      if showsForecast { series("Forecast", reading.forecast, color: forecastStroke, dashed: true) }
-      if showsIdeal { series("Pace", reading.ideal, color: muted, dashed: true) }
+      series(
+        String(localized: "Recorded"), reading.recorded, color: cursorStroke, dashed: false)
+      if showsForecast {
+        series(
+          String(localized: "Forecast"), reading.forecast, color: forecastStroke, dashed: true)
+      }
+      if showsIdeal {
+        series(String(localized: "Pace"), reading.ideal, color: muted, dashed: true)
+      }
     }
   }
 
   private var accessibilityValue: String {
-    var parts = [
-      "\(quotaChartPercentLabel(reading.value)) remaining at \(quotaChartCursorLabel(cursor, range: range))"
-    ]
-    if let delta = quotaChartDeltaText(reading.paceDelta) { parts.append(delta + " pace") }
-    if reading.projected { parts.append("Projected") }
+    let value = quotaChartPercentLabel(reading.value)
+    let date = quotaChartCursorLabel(cursor, range: range)
+    var parts = [String(localized: "\(value) remaining at \(date)")]
+    if let delta = quotaChartDeltaText(reading.paceDelta) {
+      parts.append(String(localized: "\(delta) pace"))
+    }
+    if reading.projected { parts.append(String(localized: "Projected")) }
     parts.append(range.label)
     return parts.joined(separator: ". ") + "."
   }
@@ -510,9 +521,11 @@ func quotaDurationLabel(_ seconds: TimeInterval) -> String {
   let minutes = Int(max(0, seconds) / 60)
   let days = minutes / 1_440
   let hours = minutes % 1_440 / 60
-  if days > 0 { return hours > 0 ? "\(days)d \(hours)h" : "\(days)d" }
-  if hours > 0 { return String(format: "%dh %02dm", hours, minutes % 60) }
-  return "\(minutes)m"
+  if days > 0 {
+    return hours > 0 ? String(localized: "\(days)d \(hours)h") : String(localized: "\(days)d")
+  }
+  if hours > 0 { return String(format: String(localized: "%dh %02dm"), hours, minutes % 60) }
+  return String(localized: "\(minutes)m")
 }
 
 /// Diagonal red hatching for the time between a projected run-out and the reset.

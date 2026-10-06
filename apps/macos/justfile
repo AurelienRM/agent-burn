@@ -6,6 +6,10 @@ default:
 build:
     ./build.sh
 
+# Extract interface strings into the String Catalog
+strings:
+    ./Localization/sync.sh
+
 # Open the built app
 run: build
     open 'dist/Agent Burn.app'

@@ -21,13 +21,14 @@ struct HarnessView: View {
         HarnessIcon(agent: agent)
         VStack(alignment: .leading, spacing: 3) {
           Text(harnessName(agent)).font(.system(size: 15, weight: .semibold))
-          Text(store.reports[agent]?.plan ?? "Subscription usage")
+          Text(store.reports[agent]?.plan ?? String(localized: "Subscription usage"))
             .font(.system(size: 11)).foregroundStyle(BurnTheme.muted)
         }
         Spacer()
         StatusBadge(
           text: store.errors[agent] != nil
-            ? "Needs attention" : store.offline ? "Cached" : "CLI snapshot",
+            ? String(localized: "Needs attention")
+            : store.offline ? String(localized: "Cached") : String(localized: "CLI snapshot"),
           color: store.errors[agent] != nil ? BurnTheme.accent : color)
       }
       if let error = store.errors[agent] { ReportNotice(message: error) }
@@ -35,16 +36,18 @@ struct HarnessView: View {
       if let report = store.reports[agent] {
         HStack {
           SpendMetric(
-            title: "Total spend", value: currency(report.apiEquivalentPerMonth),
-            detail: "Past 30 days · API-equivalent")
+            title: String(localized: "Total spend"), value: currency(report.apiEquivalentPerMonth),
+            detail: String(localized: "Past 30 days · API-equivalent"))
           if let price = report.pricePerMonth {
-            SpendMetric(title: "Monthly plan", value: currency(price), detail: report.plan ?? "")
+            SpendMetric(
+              title: String(localized: "Monthly plan"), value: currency(price),
+              detail: report.plan ?? "")
           }
           if !compact, let economics = report.economics {
             SpendMetric(
-              title: "Subscription value",
+              title: String(localized: "Subscription value"),
               value: "\(economics.valueMultiple.formatted(.number.precision(.fractionLength(2))))×",
-              detail: "Usage / monthly price")
+              detail: String(localized: "Usage / monthly price"))
           }
         }
         if !compact, let economics = report.economics {
@@ -103,7 +106,9 @@ struct HarnessView: View {
       if let report = store.reports[agent], !report.topModels.isEmpty {
         Rectangle().fill(BurnTheme.line).frame(height: 1)
         VStack(alignment: .leading, spacing: 14) {
-          SectionLabel(title: "Model usage", detail: "API-equivalent · past 30 days")
+          SectionLabel(
+            title: String(localized: "Model usage"),
+            detail: String(localized: "API-equivalent · past 30 days"))
           ForEach(Array(report.topModels.prefix(compact ? 2 : 6))) { model in
             HStack {
               Text(model.model).lineLimit(1).help(model.model)

@@ -73,15 +73,17 @@ struct NativeUsageView: View {
             DisclosureGroup("Subscription economics, token costs and weekly trends") {
               VStack(alignment: .leading, spacing: 20) {
                 HStack {
-                  SpendMetric(title: "Past 30 days", value: currency(report.apiEquivalentPerMonth))
                   SpendMetric(
-                    title: "Monthly plan",
-                    value: report.pricePerMonth.map(currency) ?? "Unavailable")
+                    title: String(localized: "Past 30 days"),
+                    value: currency(report.apiEquivalentPerMonth))
                   SpendMetric(
-                    title: "Subscription value",
+                    title: String(localized: "Monthly plan"),
+                    value: report.pricePerMonth.map(currency) ?? String(localized: "Unavailable"))
+                  SpendMetric(
+                    title: String(localized: "Subscription value"),
                     value: report.economics.map {
                       $0.valueMultiple.formatted(.number.precision(.fractionLength(2))) + "×"
-                    } ?? "Unavailable")
+                    } ?? String(localized: "Unavailable"))
                 }
                 HarnessSpendDetails(report: report)
               }.padding(.top, 18)
@@ -95,7 +97,9 @@ struct NativeUsageView: View {
           }), !subscriptions.isEmpty
         {
           VStack(alignment: .leading, spacing: 12) {
-            CardHeader(title: "Subscriptions", symbol: "creditcard.fill", tint: .purple) {
+            CardHeader(
+              title: String(localized: "Subscriptions"), symbol: "creditcard.fill", tint: .purple
+            ) {
               Text("Monthly plan prices")
             }
             HStack(spacing: 10) {
@@ -104,11 +108,13 @@ struct NativeUsageView: View {
                   HarnessIcon(agent: subscription.agent, size: 24)
                   VStack(alignment: .leading, spacing: 2) {
                     Text(harnessName(subscription.agent)).font(.system(size: 12, weight: .medium))
-                    Text(subscription.plan ?? "Unknown plan").font(.system(size: 11))
-                      .foregroundStyle(.secondary)
+                    Text(subscription.plan ?? String(localized: "Unknown plan")).font(
+                      .system(size: 11)
+                    )
+                    .foregroundStyle(.secondary)
                   }
                   Spacer(minLength: 8)
-                  Text((subscription.pricePerMonth.map(currency) ?? "—") + "/mo")
+                  Text("\(subscription.pricePerMonth.map(currency) ?? "—")/mo")
                     .font(.system(size: 12, weight: .semibold)).monospacedDigit()
                 }
                 .padding(10)
@@ -148,25 +154,29 @@ struct NativeUsageView: View {
   private var statStrip: some View {
     HStack(alignment: .top, spacing: 16) {
       MetricTile(
-        title: "Total spend", value: currency(cost), detail: "API-equivalent value",
+        title: String(localized: "Total spend"), value: currency(cost),
+        detail: String(localized: "API-equivalent value"),
         symbol: "dollarsign"
       )
       Divider()
       MetricTile(
-        title: "Tokens", value: tokens(tokenCount), detail: "Input, output and cache",
+        title: String(localized: "Tokens"), value: tokens(tokenCount),
+        detail: String(localized: "Input, output and cache"),
         symbol: "square.stack.3d.up.fill", tint: .blue
       )
       Divider()
       MetricTile(
-        title: "Avg tokens / $",
+        title: String(localized: "Avg tokens / $"),
         value: quotaTokensPerUnitLabel(
           quotaTokensPerDollar(tokens: tokenCount, cost: cost), unit: "$") ?? "—",
         detail: store.period.label, symbol: "gauge.with.dots.needle.50percent", tint: .green
       )
       Divider()
       MetricTile(
-        title: "Models", value: store.hasPeriodDetails ? models.count.formatted() : "—",
-        detail: agent.map(harnessName) ?? "Across all harnesses", symbol: "cpu", tint: .purple
+        title: String(localized: "Models"),
+        value: store.hasPeriodDetails ? models.count.formatted() : "—",
+        detail: agent.map(harnessName) ?? String(localized: "Across all harnesses"),
+        symbol: "cpu", tint: .purple
       )
     }
     .fixedSize(horizontal: false, vertical: true)
@@ -175,12 +185,17 @@ struct NativeUsageView: View {
 
   private func tokenBreakdown(_ breakdown: [String: UInt64]) -> some View {
     let parts: [(key: String, label: String, color: Color)] = [
-      ("input", "Input", .blue), ("output", "Output", BurnTheme.flame),
-      ("cacheWrite", "Cache write", .purple), ("cacheRead", "Cache read", .teal),
+      ("input", String(localized: "Input"), .blue),
+      ("output", String(localized: "Output"), BurnTheme.flame),
+      ("cacheWrite", String(localized: "Cache write"), .purple),
+      ("cacheRead", String(localized: "Cache read"), .teal),
     ]
     let total = max(1, parts.reduce(UInt64(0)) { $0 + (breakdown[$1.key] ?? 0) })
     return VStack(alignment: .leading, spacing: 14) {
-      CardHeader(title: "Token breakdown", symbol: "square.stack.3d.up.fill", tint: .blue) {
+      CardHeader(
+        title: String(localized: "Token breakdown"), symbol: "square.stack.3d.up.fill",
+        tint: .blue
+      ) {
         Text("Available source data")
       }
       GeometryReader { geometry in
@@ -222,7 +237,7 @@ struct NativeUsageView: View {
     let agents = (store.summary?.agents ?? []).sorted { $0.totalCost > $1.totalCost }
     let top = max(agents.first?.totalCost ?? 0, 0.01)
     return VStack(alignment: .leading, spacing: 10) {
-      CardHeader(title: "By harness", symbol: "flame.fill") {
+      CardHeader(title: String(localized: "By harness"), symbol: "flame.fill") {
         Text("\(agents.count) active")
       }
       ScrollView {
@@ -242,7 +257,7 @@ struct NativeUsageView: View {
                   ShareBar(
                     value: usage.totalCost / top, tint: BurnTheme.color(for: usage.agent),
                     height: 4)
-                  Text(tokens(usage.totalTokens) + " tokens").font(.system(size: 10))
+                  Text("\(tokens(usage.totalTokens)) tokens").font(.system(size: 10))
                     .foregroundStyle(.secondary)
                 }
                 Image(systemName: "chevron.right").font(.system(size: 9, weight: .semibold))
@@ -285,7 +300,7 @@ struct NativeUsageView: View {
 
   private var modelSection: some View {
     VStack(alignment: .leading, spacing: 12) {
-      CardHeader(title: "Models", symbol: "cpu", tint: .purple) {
+      CardHeader(title: String(localized: "Models"), symbol: "cpu", tint: .purple) {
         HStack(spacing: 10) {
           Text("\(models.count) · available source data")
           HStack(spacing: 5) {
@@ -328,12 +343,13 @@ struct NativeUsageView: View {
       let plan = store.summary?.subscription?.agents.first { $0.agent == agent }
       VStack(alignment: .leading, spacing: 16) {
         CardHeader(
-          title: harnessName(agent) + " " + (plan?.plan ?? "account"),
+          title: String(
+            localized: "\(harnessName(agent)) \(plan?.plan ?? String(localized: "account"))"),
           symbol: "gauge.with.dots.needle.33percent", tint: BurnTheme.color(for: agent)
         ) {
           HStack(spacing: 12) {
             if let price = plan?.pricePerMonth {
-              Text(currency(price) + " / month").monospacedDigit()
+              Text("\(currency(price)) / month").monospacedDigit()
             }
             QuotaChartRangePicker(
               range: agent == "cursor" ? $store.cursorQuotaChartRange : $store.quotaChartRange)
@@ -348,7 +364,7 @@ struct NativeUsageView: View {
             stale: !forecast.isFresh(at: store.quotaCheckDate)
               || store.quotaError(for: agent) != nil,
             staleHelp: store.quotaError(for: agent)
-              ?? "Showing the last known reading. Update pending.",
+              ?? String(localized: "Showing the last known reading. Update pending."),
             availableResets: style == .weekly
               ? store.reports[agent]?.resetCreditsAvailable : nil,
             rates: store.blendRates(for: agent),

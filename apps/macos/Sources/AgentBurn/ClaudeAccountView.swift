@@ -83,12 +83,12 @@ struct ClaudeAccountView: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 16) {
       CardHeader(
-        title: "Claude " + (plan?.plan ?? "account"), symbol: "gauge.with.dots.needle.33percent",
-        tint: tint
+        title: String(localized: "Claude \(plan?.plan ?? String(localized: "account"))"),
+        symbol: "gauge.with.dots.needle.33percent", tint: tint
       ) {
         HStack(spacing: 12) {
           if let price = plan?.pricePerMonth {
-            Text(currency(price) + " / month").monospacedDigit()
+            Text("\(currency(price)) / month").monospacedDigit()
           }
           if let latest = weekly ?? session { freshness(latest) }
           QuotaCheckButton(label: true)
@@ -102,12 +102,12 @@ struct ClaudeAccountView: View {
       if account != nil || weekly != nil || lastSession != nil {
         HStack(alignment: .top, spacing: 14) {
           ClaudeLimitPanel(
-            title: "5-hour session", forecast: session,
+            title: String(localized: "5-hour session"), forecast: session,
             samples: store.samples(for: claudeSessionQuotaAgent, range: .rte, now: now),
             now: now, tint: tint, used: account?.sessionUsedPercent,
             resetsAt: sessionReset, lastReading: lastReading, stale: signInExpired)
           ClaudeLimitPanel(
-            title: "Weekly", forecast: weekly,
+            title: String(localized: "Weekly"), forecast: weekly,
             samples: store.samples(for: "claude", range: .rte, now: now),
             now: now, tint: tint, used: account?.weeklyUsedPercent,
             resetsAt: claudeDate(account?.weeklyResetsAtMs), lastReading: lastReading,
@@ -136,8 +136,9 @@ struct ClaudeAccountView: View {
     }
     .help(
       fresh
-        ? "Live reading · updates every minute"
-        : store.quotaError(for: "claude") ?? "Showing the last known reading. Update pending."
+        ? String(localized: "Live reading · updates every minute")
+        : store.quotaError(for: "claude")
+          ?? String(localized: "Showing the last known reading. Update pending.")
     )
   }
 
@@ -149,13 +150,15 @@ struct ClaudeAccountView: View {
       alignment: .leading, spacing: 14
     ) {
       ForEach(account.scoped) { window in
-        ClaudeMeterRow(title: window.name + " · weekly", used: window.usedPercent, tint: tint)
+        ClaudeMeterRow(
+          title: String(localized: "\(window.name) · weekly"), used: window.usedPercent,
+          tint: tint)
       }
       if showsExtra(account) {
         ClaudeMeterRow(
-          title: "Extra usage", used: extraUsedPercent(account), tint: tint,
+          title: String(localized: "Extra usage"), used: extraUsedPercent(account), tint: tint,
           value: account.extraUsedUSD.map { extraRemaining(account, used: $0) },
-          detail: account.extraLimitUSD.map { "of " + currency($0) + " limit" })
+          detail: account.extraLimitUSD.map { String(localized: "of \(currency($0)) limit") })
       }
     }
   }
@@ -171,43 +174,48 @@ struct ClaudeVerdict: Equatable {
 /// The CLI renews an expired Claude Code token itself; this verdict means
 /// Anthropic refused the refresh token, so only `/login` in `claude` recovers.
 let claudeSignInExpiredVerdict = ClaudeVerdict(
-  atRisk: true, headline: "Claude Code sign-in expired.",
-  detail:
-    "Anthropic refused to renew the sign-in. Run claude in Terminal and use /login. Showing the last saved readings."
+  atRisk: true, headline: String(localized: "Claude Code sign-in expired."),
+  detail: String(
+    localized:
+      "Anthropic refused to renew the sign-in. Run claude in Terminal and use /login. Showing the last saved readings."
+  )
 )
 
 /// Session run-outs come first because they lock you out soonest.
 func claudeVerdict(session: Forecast?, weekly: Forecast?, now: Date) -> ClaudeVerdict? {
-  if let session, let verdict = claudeRunOutVerdict(session, name: "Session", now: now) {
+  if let session, let verdict = claudeRunOutVerdict(
+    session, name: String(localized: "Session"), now: now) {
     return verdict
   }
-  if let weekly, let verdict = claudeRunOutVerdict(weekly, name: "Weekly limit", now: now) {
+  if let weekly, let verdict = claudeRunOutVerdict(
+    weekly, name: String(localized: "Weekly limit"), now: now) {
     return verdict
   }
   guard session != nil || weekly != nil else { return nil }
   return ClaudeVerdict(
-    atRisk: false, headline: "On track.",
+    atRisk: false, headline: String(localized: "On track."),
     detail: session != nil && weekly != nil
-      ? "At this pace both limits last until they reset."
-      : "At this pace the limit lasts until it resets.")
+      ? String(localized: "At this pace both limits last until they reset.")
+      : String(localized: "At this pace the limit lasts until it resets."))
 }
 
 private func claudeRunOutVerdict(_ forecast: Forecast, name: String, now: Date) -> ClaudeVerdict? {
   let reset = quotaChartEdgeLabel(forecast.reset, isStart: false, forecast: forecast)
   if forecast.remaining <= 0 {
     return ClaudeVerdict(
-      atRisk: true, headline: "\(name) reached.", detail: "It resets \(reset).")
+      atRisk: true, headline: String(localized: "\(name) reached."),
+      detail: String(localized: "It resets \(reset)."))
   }
   guard forecast.projectedEnd < forecast.reset else { return nil }
   let empty = quotaChartEdgeLabel(forecast.projectedEnd, isStart: false, forecast: forecast)
   let left = max(60, forecast.reset.timeIntervalSince(max(now, forecast.observedAt)))
   let pace =
     forecast.duration <= 86_400
-    ? "Slow to \(quotaRateText(forecast.remaining / (left / 3_600)))/h"
-    : "Keep under \(quotaRateText(forecast.remaining / (left / 86_400)))/day"
+    ? String(localized: "Slow to \(quotaRateText(forecast.remaining / (left / 3_600)))/h")
+    : String(localized: "Keep under \(quotaRateText(forecast.remaining / (left / 86_400)))/day")
   return ClaudeVerdict(
-    atRisk: true, headline: "\(name) runs out ≈ \(empty).",
-    detail: "\(pace) to last until the \(reset) reset.")
+    atRisk: true, headline: String(localized: "\(name) runs out ≈ \(empty)."),
+    detail: String(localized: "\(pace) to last until the \(reset) reset."))
 }
 
 private func quotaRateText(_ value: Double) -> String {
@@ -334,7 +342,7 @@ struct ClaudeLimitPanel: View {
       }
       .font(.system(size: 12)).foregroundStyle(BurnTheme.muted).monospacedDigit()
       .lineLimit(1).fixedSize()
-      .help("Resets " + quotaDateCompact(reset))
+      .help("Resets \(quotaDateCompact(reset))")
     }
   }
 
@@ -351,12 +359,16 @@ struct ClaudeLimitPanel: View {
 
   private var placeholderText: String {
     if unconfirmed {
-      let since = lastReading.map { " since " + $0.formatted(date: .omitted, time: .shortened) }
-      return "No live reading\(since ?? ""). Check that Claude Code is signed in."
+      if let lastReading {
+        let time = lastReading.formatted(date: .omitted, time: .shortened)
+        return String(
+          localized: "No live reading since \(time). Check that Claude Code is signed in.")
+      }
+      return String(localized: "No live reading. Check that Claude Code is signed in.")
     }
     return hasReset
-      ? "Limit reset. A new window starts with your next request."
-      : "The chart appears after the next live reading."
+      ? String(localized: "Limit reset. A new window starts with your next request.")
+      : String(localized: "The chart appears after the next live reading.")
   }
 }
 
@@ -377,9 +389,10 @@ struct ClaudePaceBadge: View {
 }
 
 func claudePaceText(_ delta: Double) -> String {
-  if abs(delta) < 0.05 { return "On pace" }
+  if abs(delta) < 0.05 { return String(localized: "On pace") }
   let magnitude = abs(delta).formatted(.number.precision(.fractionLength(0...1)))
-  return delta > 0 ? "+\(magnitude) pts ahead" : "−\(magnitude) pts behind"
+  return delta > 0
+    ? String(localized: "+\(magnitude) pts ahead") : String(localized: "−\(magnitude) pts behind")
 }
 
 /// Model-scoped limits and extra usage: title, optional detail, a thin bar and the value.
@@ -441,5 +454,6 @@ func extraUsedPercent(_ account: ClaudeAccount) -> Double? {
 }
 
 func extraRemaining(_ account: ClaudeAccount, used: Double) -> String {
-  account.extraLimitUSD.map { currency(max(0, $0 - used)) + " left" } ?? currency(used) + " used"
+  account.extraLimitUSD.map { String(localized: "\(currency(max(0, $0 - used))) left") }
+    ?? String(localized: "\(currency(used)) used")
 }

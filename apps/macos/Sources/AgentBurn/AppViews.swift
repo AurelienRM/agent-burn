@@ -78,7 +78,8 @@ private struct PopoverTabs: View {
   @Binding var selection: String
   @Namespace private var pill
   private let tabs: [(id: String, label: String)] = [
-    ("summary", "General"), ("codex", "Codex"), ("claude", "Claude"), ("cursor", "Cursor"),
+    ("summary", String(localized: "General")), ("codex", "Codex"), ("claude", "Claude"),
+    ("cursor", "Cursor"),
   ]
   var body: some View {
     HStack(spacing: 2) {
@@ -169,7 +170,9 @@ struct DashboardView: View {
         RefreshFooter(source: "summary").padding(.horizontal, 20).padding(.vertical, 9)
       }
       .background(BurnTheme.background)
-      .navigationTitle(store.selection == "summary" ? "Overview" : harnessName(store.selection))
+      .navigationTitle(
+        store.selection == "summary" ? String(localized: "Overview") : harnessName(store.selection)
+      )
       .navigationSubtitle(store.period.label)
     }
     .frame(minWidth: 980, minHeight: 650)
@@ -215,7 +218,7 @@ private struct DashboardSidebar: View {
 
   var body: some View {
     List(selection: selection) {
-      row(id: "summary", title: "Overview") {
+      row(id: "summary", title: String(localized: "Overview")) {
         IconBadge(symbol: "flame.fill", size: 20)
       } trailing: {
         spend(store.summary?.totals.totalCost)
@@ -418,7 +421,7 @@ private struct DataSettings: View {
           let panel = NSOpenPanel()
           panel.canChooseDirectories = false
           panel.allowsMultipleSelection = false
-          panel.message = "Choose the native agent-burn executable."
+          panel.message = String(localized: "Choose the native agent-burn executable.")
           if panel.runModal() == .OK, let url = panel.url { store.customPath = url.path }
         }
         Toggle("Use cached pricing and limits", isOn: $store.offline)

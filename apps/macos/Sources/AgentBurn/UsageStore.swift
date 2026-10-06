@@ -8,15 +8,15 @@ enum UsagePeriod: String, CaseIterable, Identifiable {
   }
   var label: String {
     switch self {
-    case .today: "Today"
-    case .all: "All time"
-    case .yesterday: "Yesterday"
-    case .rtd: "Reset to date"
-    case .wtd: "Week to date"
-    case .ytd: "Year to date"
-    case .week: "Last 7 days"
-    case .mtd: "This month"
-    case .month: "Last 30 days"
+    case .today: String(localized: "Today")
+    case .all: String(localized: "All time")
+    case .yesterday: String(localized: "Yesterday")
+    case .rtd: String(localized: "Reset to date")
+    case .wtd: String(localized: "Week to date")
+    case .ytd: String(localized: "Year to date")
+    case .week: String(localized: "Last 7 days")
+    case .mtd: String(localized: "This month")
+    case .month: String(localized: "Last 30 days")
     }
   }
 }
@@ -152,7 +152,9 @@ final class UsageStore {
     } catch {
       archiveWritable = false
       errors["archive"] =
-        "Metrics history could not be read or saved. Existing files have been preserved."
+        String(
+          localized:
+            "Metrics history could not be read or saved. Existing files have been preserved.")
     }
     reloadQuotas()
     publishSummary()
@@ -171,7 +173,8 @@ final class UsageStore {
       errors["quotaHistory"] = nil
     } catch {
       errors["quotaHistory"] =
-        "Quota history could not be read. The last available readings are preserved."
+        String(
+          localized: "Quota history could not be read. The last available readings are preserved.")
     }
   }
 
@@ -182,7 +185,10 @@ final class UsageStore {
     if defaults.object(forKey: "backgroundQuotas") as? Bool != false {
       do { try await QuotaService.registerForCurrentBundle() } catch {
         errors["quotaService"] =
-          "Background collection could not start. Enable it in Settings → Background quota history."
+          String(
+            localized:
+              "Background collection could not start. Enable it in Settings → Background quota history."
+          )
       }
     }
     async let quotas: () = watchQuotas()
@@ -199,7 +205,7 @@ final class UsageStore {
       configuredQuotaSource = quotaSourceKey
       errors["quotaConfig"] = nil
     } catch {
-      errors["quotaConfig"] = "Background quota settings could not be saved."
+      errors["quotaConfig"] = String(localized: "Background quota settings could not be saved.")
     }
   }
 
@@ -215,8 +221,14 @@ final class UsageStore {
       } else if backgroundEnabled {
         errors["quotaService"] =
           status == .requiresApproval
-          ? "Allow Agent Burn background activity in System Settings. Quotas are collected while this app is open."
-          : "Background collection is unavailable. Enable it in Settings to continue collecting after quitting."
+          ? String(
+            localized:
+              "Allow Agent Burn background activity in System Settings. Quotas are collected while this app is open."
+          )
+          : String(
+            localized:
+              "Background collection is unavailable. Enable it in Settings to continue collecting after quitting."
+          )
       } else {
         errors["quotaService"] = nil
       }
@@ -267,7 +279,9 @@ final class UsageStore {
         errors["quotaCollector"] = nil
       } catch {
         errors["quotaCollector"] =
-          "Quota collection could not save its readings. Existing history is preserved."
+          String(
+            localized:
+              "Quota collection could not save its readings. Existing history is preserved.")
       }
       reloadQuotas()
       quotaCheckDate = .now
@@ -406,7 +420,8 @@ final class UsageStore {
           try MetricsArchiveFile(url: archiveURL).save(archive)
           errors["archive"] = nil
         } catch {
-          errors["archive"] = "Daily metrics could not be saved. Check the history file location."
+          errors["archive"] = String(
+            localized: "Daily metrics could not be saved. Check the history file location.")
         }
       }
       summaryErrors[query.cacheKey] = nil
@@ -445,7 +460,7 @@ final class UsageStore {
         try ReportCacheFile(directory: cacheURL.deletingLastPathComponent()).save(cache)
       }
       errors["cache"] = nil
-    } catch { errors["cache"] = "Unable to save report history on this Mac." }
+    } catch { errors["cache"] = String(localized: "Unable to save report history on this Mac.") }
   }
 
   var chartDomain: ClosedRange<Date>? {
@@ -505,7 +520,7 @@ final class UsageStore {
       errors["quotaHistory"] = nil
     } catch {
       errors["quotaHistory"] =
-        "Quota history could not be saved. Existing readings are preserved."
+        String(localized: "Quota history could not be saved. Existing readings are preserved.")
     }
   }
 
@@ -519,7 +534,9 @@ final class UsageStore {
       errors["claudeAccount"] = nil
     } catch {
       errors["claudeAccount"] =
-        "Claude account meters could not be saved. The last saved reading is preserved."
+        String(
+          localized:
+            "Claude account meters could not be saved. The last saved reading is preserved.")
     }
   }
 
