@@ -74,6 +74,11 @@ struct ClaudeAccountView: View {
   private var sessionReset: Date? {
     [claudeDate(account?.sessionResetsAtMs), lastSession?.reset].compactMap { $0 }.max()
   }
+  /// The newest moment any Claude meter was read, live or from the report.
+  private var lastReading: Date? {
+    [weekly?.observedAt, lastSession?.observedAt, claudeDate(account?.observedAtMs)]
+      .compactMap { $0 }.max()
+  }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 16) {
@@ -100,12 +105,13 @@ struct ClaudeAccountView: View {
             title: "5-hour session", forecast: session,
             samples: store.samples(for: claudeSessionQuotaAgent, range: .rte, now: now),
             now: now, tint: tint, used: account?.sessionUsedPercent,
-            resetsAt: sessionReset, stale: signInExpired)
+            resetsAt: sessionReset, lastReading: lastReading, stale: signInExpired)
           ClaudeLimitPanel(
             title: "Weekly", forecast: weekly,
             samples: store.samples(for: "claude", range: .rte, now: now),
             now: now, tint: tint, used: account?.weeklyUsedPercent,
-            resetsAt: claudeDate(account?.weeklyResetsAtMs), stale: signInExpired)
+            resetsAt: claudeDate(account?.weeklyResetsAtMs), lastReading: lastReading,
+            stale: signInExpired)
         }
       }
       if let account, !account.scoped.isEmpty || showsExtra(account) {
@@ -239,13 +245,22 @@ struct ClaudeLimitPanel: View {
   let tint: Color
   var used: Double? = nil
   var resetsAt: Date? = nil
+  /// When Claude's meters were last read; a reset after it is not confirmed.
+  var lastReading: Date? = nil
   /// The readings cannot update, so even a recent one is only the last known value.
   var stale = false
 
   private var reset: Date? { forecast?.reset ?? resetsAt }
   private var hasReset: Bool { reset.map { $0 <= now } ?? false }
+  /// The window ended after the last reading, so a new one may already be running:
+  /// claiming a full meter would be a guess.
+  private var unconfirmed: Bool {
+    guard forecast == nil, hasReset, let reset else { return false }
+    return (lastReading ?? .distantPast) < reset
+  }
   private var remaining: Double? {
     if let forecast { return forecast.remaining }
+    if unconfirmed { return nil }
     if hasReset { return 100 }
     return used.map { max(0, min(100, 100 - $0)) }
   }
@@ -266,7 +281,7 @@ struct ClaudeLimitPanel: View {
           Text(title.uppercased())
             .font(.system(size: 11, weight: .semibold)).tracking(0.6)
             .foregroundStyle(BurnTheme.muted)
-          if stale || forecast.map({ !$0.isFresh(at: now) }) == true {
+          if stale || unconfirmed || forecast.map({ !$0.isFresh(at: now) }) == true {
             Image(systemName: "clock.badge.exclamationmark")
               .font(.system(size: 11)).foregroundStyle(.orange)
               .help("Showing the last known reading. Update pending.")
@@ -327,15 +342,21 @@ struct ClaudeLimitPanel: View {
     VStack(alignment: .leading, spacing: 10) {
       Spacer(minLength: 0)
       if let remaining { ShareBar(value: remaining / 100, tint: tint, height: 6) }
-      Text(
-        hasReset
-          ? "Limit reset. A new window starts with your next request."
-          : "The chart appears after the next live reading."
-      )
+      Text(placeholderText)
       .font(.system(size: 11)).foregroundStyle(BurnTheme.muted)
       Spacer(minLength: 0)
     }
     .frame(height: 150)
+  }
+
+  private var placeholderText: String {
+    if unconfirmed {
+      let since = lastReading.map { " since " + $0.formatted(date: .omitted, time: .shortened) }
+      return "No live reading\(since ?? ""). Check that Claude Code is signed in."
+    }
+    return hasReset
+      ? "Limit reset. A new window starts with your next request."
+      : "The chart appears after the next live reading."
   }
 }
 
